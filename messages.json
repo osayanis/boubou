@@ -1,14 +1,14 @@
 {
-  "_lisezmoi": "Les phrases de Mochi. Modifie ce fichier sur GitHub (branche main) : l'app le relit toute seule (au lancement puis toutes les 3 h), sans publier de version. {prenom} = son prénom, {de} = le champ « de ». Une liste vide = on garde les phrases intégrées à l'app. « evenements » : date au format MM-JJ.",
+  "_lisezmoi": "Les phrases de Boubou. Modifie ce fichier sur GitHub (branche main) : l'app le relit toute seule (au lancement puis toutes les 3 h), sans publier de version. {prenom} = son prénom, {de} = le champ « de ». Une liste vide = on garde les phrases intégrées à l'app. « evenements » : date au format MM-JJ.",
   "de": "Yanis",
   "lien": { "code": "861559", "nom": "Yanis" },
 
   "evenements": [
-    { "date": "10-08", "fete": true, "texte": "Joyeux anniversaire de couple, Jeanne & Yanis ! 💕🎉 Une année de plus à deux. Mochi est super fier de vous." }
+    { "date": "10-08", "fete": true, "texte": "Joyeux anniversaire de couple, Jeanne & Yanis ! 💕🎉 Une année de plus à deux. Boubou est super fier de vous." }
   ],
 
   "bonjour": [
-    "Bonjour {prenom} ☀️ Docteur Mochi au rapport, prêt pour la visite du matin.",
+    "Bonjour {prenom} ☀️ Docteur Boubou au rapport, prêt pour la visite du matin.",
     "Coucou {prenom} ! Nouvelle journée, nouvelle garde. Voilà ce qui t'attend :",
     "Bien dormi, docteur {prenom} ? Voici ton programme.",
     "Debout la future meilleure médecin de France ! Ta journée :",
@@ -24,7 +24,7 @@
     "Aucune tâche ni révision aujourd'hui. Tu as le droit de souffler, c'est dans l'ordonnance."
   ],
   "accueil": [
-    "Coucou {prenom} ! Moi c'est Mochi, ton assistant de garde 🩺\nClique sur moi : ta journée. Double-clic : je vais dormir et je te laisse bosser. Secoue-moi : {de} saura que tu penses à lui 💕"
+    "Coucou {prenom} ! Moi c'est Boubou, ton assistant de garde 🩺\nClique sur moi : ta journée. Double-clic : je vais dormir et je te laisse bosser. Secoue-moi : {de} saura que tu penses à lui 💕"
   ],
 
   "questions": [
@@ -67,7 +67,7 @@
     "Envoie un petit message à quelqu'un que tu aimes bien.",
     "Ta valeur ne se résume pas à une note ou à un classement.",
     "Pas réussi du premier coup ? Normal : les J sont faits pour ça.",
-    "Ouvre la fenêtre deux minutes. Ordonnance du docteur Mochi.",
+    "Ouvre la fenêtre deux minutes. Ordonnance du docteur Boubou.",
     "Même les grands médecins ont commencé par ne rien savoir.",
     "Tu progresses plus que tu ne le crois. Promis.",
     "Si tu bloques sur un truc depuis 20 minutes, passe au suivant. Tu y reviendras.",
@@ -98,7 +98,7 @@
   ],
   "tard": [
     "Il est 22 h 30 passées {prenom}… La mémoire se consolide en dormant : le meilleur révision-hack, c'est ton lit 🌙",
-    "Ordonnance de Mochi : extinction des feux. Ton cerveau rangera les fiches pendant la nuit.",
+    "Ordonnance de Boubou : extinction des feux. Ton cerveau rangera les fiches pendant la nuit.",
     "Moi je vais bientôt me coucher… et toi aussi, d'accord ? 🌙"
   ],
 
@@ -169,7 +169,7 @@
     "Faire quelque chose juste pour le plaisir, même 20 minutes",
     "Écouter une chanson que tu adores, à fond",
     "Ranger ton bureau en 5 minutes chrono",
-    "Faire les étirements avec Mochi",
+    "Faire les étirements avec Boubou",
     "Un focus de 25 minutes sans téléphone"
   ],
 

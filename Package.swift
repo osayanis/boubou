@@ -2,12 +2,12 @@
 import PackageDescription
 
 let package = Package(
-    name: "Mochi",
+    name: "Boubou",
     platforms: [.macOS(.v14)],
     targets: [
         .executableTarget(
-            name: "Mochi",
-            path: "Sources/Mochi",
+            name: "Boubou",
+            path: "Sources/Boubou",
             swiftSettings: [.swiftLanguageMode(.v5)]
         )
     ]

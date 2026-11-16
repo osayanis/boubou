@@ -1,5 +1,5 @@
 #!/bin/bash
-# Fabrique « Mochi.app » (build + icône + Info.plist + messages.json + signature).
+# Fabrique « Boubou.app » (build + icône + Info.plist + messages.json + signature).
 set -euo pipefail
 cd "$(dirname "$0")"
 
@@ -7,7 +7,7 @@ CONFIG="${1:-release}"
 VERSION="$(cat VERSION)"
 echo "▶︎ swift build ($CONFIG)…"
 swift build -c "$CONFIG"
-BIN=".build/$CONFIG/Mochi"
+BIN=".build/$CONFIG/Boubou"
 
 if [ ! -f AppIcon.icns ]; then
   rm -rf AppIcon.iconset
@@ -16,10 +16,10 @@ if [ ! -f AppIcon.icns ]; then
   rm -rf AppIcon.iconset
 fi
 
-APP="Mochi.app"
+APP="Boubou.app"
 rm -rf "$APP"
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
-cp "$BIN" "$APP/Contents/MacOS/Mochi"
+cp "$BIN" "$APP/Contents/MacOS/Boubou"
 cp AppIcon.icns "$APP/Contents/Resources/AppIcon.icns"
 cp messages.json "$APP/Contents/Resources/messages.json"
 
@@ -28,10 +28,10 @@ cat > "$APP/Contents/Info.plist" <<PLIST
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-  <key>CFBundleName</key><string>Mochi</string>
-  <key>CFBundleDisplayName</key><string>Mochi</string>
-  <key>CFBundleIdentifier</key><string>com.osalabs.mochi</string>
-  <key>CFBundleExecutable</key><string>Mochi</string>
+  <key>CFBundleName</key><string>Boubou</string>
+  <key>CFBundleDisplayName</key><string>Boubou</string>
+  <key>CFBundleIdentifier</key><string>com.osalabs.boubou</string>
+  <key>CFBundleExecutable</key><string>Boubou</string>
   <key>CFBundleIconFile</key><string>AppIcon</string>
   <key>CFBundlePackageType</key><string>APPL</string>
   <key>CFBundleShortVersionString</key><string>$VERSION</string>

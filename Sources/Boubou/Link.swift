@@ -1,7 +1,7 @@
 import Foundation
 
-/// Le fil entre Mochi (chez Jeanne) et l'OsaNotch de Yanis, par le relais « Amis » du serveur
-/// OsaDrop (socket.io) : Mochi écoute sur son propre code à 6 chiffres et écrit au code de Yanis
+/// Le fil entre Boubou (chez Jeanne) et l'OsaNotch de Yanis, par le relais « Amis » du serveur
+/// OsaDrop (socket.io) : Boubou écoute sur son propre code à 6 chiffres et écrit au code de Yanis
 /// (champ « lien » de messages.json). Messages :
 ///   → OsaNotch : mochi_hello {code, name} (appairage automatique), mochi_pense {code, name}
 ///   ← OsaNotch : notch_love {name}, notch_hello {name}
@@ -19,15 +19,15 @@ final class Link: NSObject, URLSessionWebSocketDelegate {
     private var ackID = 0
     private var acks: [Int: (Bool) -> Void] = [:]
     private var pendingThought: Date? {
-        get { UserDefaults.standard.object(forKey: "MochiPenseEnAttente") as? Date }
-        set { UserDefaults.standard.set(newValue, forKey: "MochiPenseEnAttente") }
+        get { UserDefaults.standard.object(forKey: "BoubouPenseEnAttente") as? Date }
+        set { UserDefaults.standard.set(newValue, forKey: "BoubouPenseEnAttente") }
     }
     private var lastLove = Date.distantPast
     var onLove: (String) -> Void = { _ in }
 
     override init() {
-        if let c = UserDefaults.standard.string(forKey: "MochiCode"), c.count == 6 { myCode = c }
-        else { myCode = String(Int.random(in: 100000...999999)); UserDefaults.standard.set(myCode, forKey: "MochiCode") }
+        if let c = UserDefaults.standard.string(forKey: "BoubouCode"), c.count == 6 { myCode = c }
+        else { myCode = String(Int.random(in: 100000...999999)); UserDefaults.standard.set(myCode, forKey: "BoubouCode") }
         super.init()
         session = URLSession(configuration: .default, delegate: self, delegateQueue: .main)
     }
@@ -43,7 +43,7 @@ final class Link: NSObject, URLSessionWebSocketDelegate {
     private var partner: (code: String, name: String)? { Messages.shared.partner }
     private var name: String { Store.shared.name.isEmpty ? "Jeanne" : Store.shared.name }
 
-    /// Elle a secoué Mochi : « Jeanne pense à vous » dans l'OsaNotch de Yanis.
+    /// Elle a secoué Boubou : « Jeanne pense à vous » dans l'OsaNotch de Yanis.
     func sendThought(done: @escaping (Bool) -> Void) {
         guard let p = partner else { return done(false) }
         send(to: p.code, ["type": "mochi_pense", "name": name, "code": myCode]) { [weak self] ok in

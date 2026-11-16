@@ -142,7 +142,7 @@ struct Saved: Codable {
     }
 }
 
-/// Tout ce que Mochi retient, dans ~/Library/Application Support/Mochi/donnees.json.
+/// Tout ce que Boubou retient, dans ~/Library/Application Support/Boubou/donnees.json.
 /// (Rien ne quitte le Mac.)
 @MainActor
 final class Store: ObservableObject {
@@ -154,11 +154,11 @@ final class Store: ObservableObject {
     private var file: URL { folder.appendingPathComponent("donnees.json") }
 
     private init() {
-        if let custom = ProcessInfo.processInfo.environment["MOCHI_DOSSIER"] {
+        if let custom = ProcessInfo.processInfo.environment["BOUBOU_DOSSIER"] {
             folder = URL(fileURLWithPath: custom)
         } else {
             folder = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
-                .appendingPathComponent("Mochi")
+                .appendingPathComponent("Boubou")
         }
         try? FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
         if let d = try? Data(contentsOf: file) {

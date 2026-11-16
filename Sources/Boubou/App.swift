@@ -13,7 +13,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     func applicationDidFinishLaunching(_ n: Notification) {
         Self.shared = self
 
-        // Un seul Mochi à la fois.
+        // Un seul Boubou à la fois.
         let others = NSRunningApplication.runningApplications(withBundleIdentifier: Bundle.main.bundleIdentifier ?? "")
             .filter { $0 != .current }
         if !others.isEmpty, Bundle.main.bundleIdentifier != nil { NSApp.terminate(nil); return }
@@ -30,7 +30,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
         // Un petit stéthoscope dans la barre des menus : pour le retrouver s'il est caché.
         status = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
-        status.button?.image = NSImage(systemSymbolName: "stethoscope", accessibilityDescription: "Mochi")
+        status.button?.image = NSImage(systemSymbolName: "stethoscope", accessibilityDescription: "Boubou")
         status.menu = NSMenu()
         status.menu?.delegate = self
 
@@ -73,7 +73,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             { self.coach.show(); self.mascot.updateVisibility(); self.coach.wake(silent: true); run() }
         }
         item("Ma journée") { awake { self.quick.open() }() }
-        item(coach.sleeping ? "Réveiller Mochi" : "Mochi va dormir (double-clic)") {
+        item(coach.sleeping ? "Réveiller Boubou" : "Boubou va dormir (double-clic)") {
             self.coach.sleeping ? self.coach.wake() : self.coach.sleep()
         }
         m.addItem(.separator())
@@ -83,11 +83,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         item(coach.focusing ? "Arrêter le focus" : "Focus 25 minutes", awake { self.coach.focusing ? self.coach.stopFocus() : self.coach.startFocus() })
         m.addItem(.separator())
         if coach.hidden {
-            item("Faire revenir Mochi") { self.coach.show() }
+            item("Faire revenir Boubou") { self.coach.show() }
         } else {
-            item("Cacher Mochi 1 heure") { self.coach.hide(hours: 1) }
+            item("Cacher Boubou 1 heure") { self.coach.hide(hours: 1) }
         }
-        item("Quitter Mochi") { NSApp.terminate(nil) }
+        item("Quitter Boubou") { NSApp.terminate(nil) }
         return m
     }
 }

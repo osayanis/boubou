@@ -22,7 +22,7 @@ final class FloatingPanel: NSPanel {
     override var canBecomeMain: Bool { false }
 }
 
-// MARK: - Mochi
+// MARK: - Boubou
 
 private struct MascotView: View {
     @ObservedObject var coach: Coach
@@ -55,7 +55,7 @@ private struct MascotView: View {
     }
 }
 
-/// Clics, double-clics, glisser-déposer, caresses et secousses. Ne capte la souris que sur Mochi
+/// Clics, double-clics, glisser-déposer, caresses et secousses. Ne capte la souris que sur Boubou
 /// (ou son lit) : le reste du panneau laisse passer les clics vers les fenêtres derrière.
 private final class TouchView: NSView {
     var hitRect: () -> NSRect = { .zero }
@@ -194,7 +194,7 @@ final class MascotController {
         touch.onPet = { [weak self] in self?.coach.petted() }
         panel.contentView = touch
         panel.acceptsMouseMovedEvents = true
-        panel.setAccessibilityLabel("Mochi")
+        panel.setAccessibilityLabel("Boubou")
 
         place(animated: false)
         NotificationCenter.default.addObserver(forName: NSApplication.didChangeScreenParametersNotification, object: nil, queue: .main) { _ in
@@ -287,7 +287,7 @@ final class MascotController {
         if r != coach.look { coach.look = r }
     }
 
-    /// Le corps de Mochi, en coordonnées écran (pour coller la bulle et le panneau à côté).
+    /// Le corps de Boubou, en coordonnées écran (pour coller la bulle et le panneau à côté).
     var bodyFrame: NSRect {
         let f = panel.frame
         return NSRect(x: f.midX - 38, y: f.minY, width: 76, height: 70)
@@ -368,7 +368,7 @@ struct BubbleCard: View {
     }
 }
 
-/// Bulle de BD avec sa petite queue vers Mochi.
+/// Bulle de BD avec sa petite queue vers Boubou.
 struct BubbleShape: Shape {
     var tailRight: Bool
     var tailBottom: Bool
@@ -428,7 +428,7 @@ final class BubbleController {
         panel.orderFrontRegardless()
     }
 
-    /// Recolle la bulle à côté de Mochi, à la bonne taille.
+    /// Recolle la bulle à côté de Boubou, à la bonne taille.
     func follow() {
         guard let host, let m = mascot?.bodyFrame else { return }
         host.layoutSubtreeIfNeeded()

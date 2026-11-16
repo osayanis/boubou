@@ -1,11 +1,11 @@
 import Foundation
 
-/// Les phrases de Mochi. Source : messages.json (dans l'app), remplacé par la version en ligne
+/// Les phrases de Boubou. Source : messages.json (dans l'app), remplacé par la version en ligne
 /// du dépôt GitHub dès qu'elle est lisible — Yanis peut changer les textes sans publier de version.
 @MainActor
 final class Messages: ObservableObject {
     static let shared = Messages()
-    static let remote = URL(string: "https://raw.githubusercontent.com/osayanis/mochi/main/messages.json")!
+    static let remote = URL(string: "https://raw.githubusercontent.com/osayanis/boubou/main/messages.json")!
 
     @Published private(set) var table: [String: Any] = [:]
     private var bundled: [String: Any] = [:]

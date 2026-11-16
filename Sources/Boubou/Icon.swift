@@ -1,7 +1,7 @@
 import SwiftUI
 import AppKit
 
-/// L'icône : Mochi en docteur sur le fond sombre des apps Osa, avec une croix de pharmacie.
+/// L'icône : Boubou en docteur sur le fond sombre des apps Osa, avec une croix de pharmacie.
 struct IconArt: View {
     var body: some View {
         ZStack {
@@ -33,7 +33,7 @@ struct IconArt: View {
         }
     }
 
-    /// `Mochi apercu <fichier.png>` : toutes les humeurs côte à côte, pour vérifier le dessin.
+    /// `Boubou apercu <fichier.png>` : toutes les humeurs côte à côte, pour vérifier le dessin.
     @MainActor static func preview(to file: URL) throws {
         let moods: [Boule.Mood] = [.calm, .happy, .curious, .excited, .worried, .sad, .sleepy, .dizzy, .love]
         let v = VStack(spacing: 30) {

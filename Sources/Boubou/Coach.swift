@@ -8,7 +8,7 @@ struct BubbleAction: Identifiable {
     var run: () -> Void
 }
 
-/// Une bulle de Mochi : un texte, éventuellement une liste, des boutons.
+/// Une bulle de Boubou : un texte, éventuellement une liste, des boutons.
 struct BubbleModel: Identifiable {
     var id = UUID()
     var text: String
@@ -18,7 +18,7 @@ struct BubbleModel: Identifiable {
     var autoHide: Double? = nil
 }
 
-/// Le cerveau : décide quand Mochi parle (visite du matin, « ça va ? », petits mots, bilan du soir,
+/// Le cerveau : décide quand Boubou parle (visite du matin, « ça va ? », petits mots, bilan du soir,
 /// « va dormir »), comment il bouge (petites animations quand on ne s'occupe pas de lui) et ce qu'il
 /// répond quand on joue avec lui (caresse, secousse, lit, focus, étirements, bulles, eau).
 @MainActor
@@ -300,7 +300,7 @@ final class Coach: ObservableObject {
         }
     }
 
-    // MARK: Jouer avec Mochi
+    // MARK: Jouer avec Boubou
 
     /// La souris passe et repasse sur lui : il adore.
     func petted() {

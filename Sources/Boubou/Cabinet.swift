@@ -1,7 +1,7 @@
 import SwiftUI
 import AppKit
 
-/// Le panneau de Mochi : un seul écran, pour aller vite. Sa liste du jour (tâches, révisions, défi),
+/// Le panneau de Boubou : un seul écran, pour aller vite. Sa liste du jour (tâches, révisions, défi),
 /// un champ pour ajouter, les pauses en un clic, et « ça va ? ». Le reste est replié.
 struct QuickPanel: View {
     @ObservedObject var store = Store.shared
@@ -290,7 +290,7 @@ private struct SettingsBlock: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(spacing: 4) {
-                Text("Mochi passe").font(.system(size: 11.5, weight: .bold)).foregroundStyle(.white.opacity(0.5))
+                Text("Boubou passe").font(.system(size: 11.5, weight: .bold)).foregroundStyle(.white.opacity(0.5))
                 ForEach(Rhythm.allCases) { r in
                     Button { store.settings.rhythm = r } label: {
                         Text(r.label).font(.system(size: 11, weight: .bold))
@@ -301,7 +301,7 @@ private struct SettingsBlock: View {
                 }
             }
             Toggle(isOn: $login) {
-                Text("Ouvrir Mochi au démarrage").font(.system(size: 12, weight: .semibold)).foregroundStyle(.white.opacity(0.8))
+                Text("Ouvrir Boubou au démarrage").font(.system(size: 12, weight: .semibold)).foregroundStyle(.white.opacity(0.8))
             }
             .toggleStyle(.switch).controlSize(.small).tint(Theme.done)
             .onChange(of: login) { _, v in v ? LoginItem.enable() : LoginItem.disable(); login = LoginItem.enabled }
@@ -321,7 +321,7 @@ private struct SettingsBlock: View {
     }
 }
 
-// MARK: - La fenêtre du panneau : à côté de Mochi, se ferme dès qu'on clique ailleurs
+// MARK: - La fenêtre du panneau : à côté de Boubou, se ferme dès qu'on clique ailleurs
 
 @MainActor
 final class PanelController: NSObject, NSWindowDelegate {
@@ -373,7 +373,7 @@ final class PanelController: NSObject, NSWindowDelegate {
     func windowDidResignKey(_ n: Notification) { close() }
 
     func windowDidResize(_ n: Notification) {
-        // le panneau grandit (réglages, aide) : il reste collé à Mochi et dans l'écran
+        // le panneau grandit (réglages, aide) : il reste collé à Boubou et dans l'écran
         guard let p = panel, let v = (mascot?.panel.screen ?? NSScreen.main)?.visibleFrame else { return }
         var f = p.frame
         f.origin.y = min(max(f.origin.y, v.minY + 6), v.maxY - f.height - 6)

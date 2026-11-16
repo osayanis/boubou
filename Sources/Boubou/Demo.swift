@@ -1,11 +1,11 @@
 import AppKit
 
-/// `MOCHI_DEMO=<scène>` déclenche une scène tout de suite (pour essayer et faire des captures) :
+/// `BOUBOU_DEMO=<scène>` déclenche une scène tout de suite (pour essayer et faire des captures) :
 /// accueil matin question bien bof mal respire etire bulles focus dodo reveil caresse secoue yanis
 /// anniversaire eau panneau
 enum Demo {
     @MainActor static func run(_ app: AppDelegate) {
-        guard let scene = ProcessInfo.processInfo.environment["MOCHI_DEMO"] else { return }
+        guard let scene = ProcessInfo.processInfo.environment["BOUBOU_DEMO"] else { return }
         let coach = Coach.shared
         DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
             switch scene {

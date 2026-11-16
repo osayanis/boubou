@@ -1,6 +1,6 @@
 import SwiftUI
 
-// Mochi : la mascotte Osa (corps crème, bras, pieds, joues roses), en docteur :
+// Boubou : la mascotte Osa (corps crème, bras, pieds, joues roses), en docteur :
 // miroir frontal (ou chapeau de fête les jours de fête), blouse avec poche et stylo, stéthoscope.
 // Elle cligne des yeux, regarde où on lui dit (`look`, de -1 à 1), lève les bras,
 // saute quand `hop` change, et gonfle doucement avec `breath` (0…1) pendant la respiration.
@@ -281,7 +281,7 @@ struct Triangle: Shape {
     }
 }
 
-/// Mochi qui dort dans son petit lit : tête sur l'oreiller, couverture qui se soulève, des « z » qui montent.
+/// Boubou qui dort dans son petit lit : tête sur l'oreiller, couverture qui se soulève, des « z » qui montent.
 struct BedView: View {
     var size: CGFloat = 96
     @State private var breathe = false
@@ -302,7 +302,7 @@ struct BedView: View {
             RoundedRectangle(cornerRadius: w * 0.04).fill(.white).frame(width: w * 0.78, height: w * 0.08).offset(x: w * 0.12, y: -w * 0.16)
             // oreiller
             Ellipse().fill(Color(red: 0.95, green: 0.95, blue: 0.97)).frame(width: w * 0.24, height: w * 0.12).offset(x: w * 0.13, y: -w * 0.21)
-            // Mochi bordé, la tête sur l'oreiller
+            // Boubou bordé, la tête sur l'oreiller
             Boule(mood: .sleepy, size: w * 0.34, shadow: false, tilt: -10, plain: true)
                 .offset(x: w * 0.07, y: -w * 0.27)
             // couverture

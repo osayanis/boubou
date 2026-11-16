@@ -1,7 +1,7 @@
 import SwiftUI
 import AppKit
 
-// MARK: - Particules (cœurs, confettis, étincelles, gouttes) qui jaillissent de Mochi
+// MARK: - Particules (cœurs, confettis, étincelles, gouttes) qui jaillissent de Boubou
 
 enum BurstKind { case hearts, bigHearts, confetti, sparkles, drops }
 
@@ -31,7 +31,7 @@ final class FX: ObservableObject {
 
     func burst(_ k: BurstKind) {
         guard let m = mascot?.panel.frame, mascot?.panel.isVisible == true else { return }
-        // le bas du panneau d'effets au niveau de Mochi, centré sur lui (et dans l'écran)
+        // le bas du panneau d'effets au niveau de Boubou, centré sur lui (et dans l'écran)
         var o = NSPoint(x: m.midX - Self.size.width / 2, y: m.minY + 10)
         if let v = mascot?.panel.screen?.visibleFrame {
             o.x = min(max(o.x, v.minX), v.maxX - Self.size.width)
@@ -49,7 +49,7 @@ final class FX: ObservableObject {
         }
     }
 
-    /// Le centre de Mochi, dans les coordonnées du panneau (origine en haut à gauche).
+    /// Le centre de Boubou, dans les coordonnées du panneau (origine en haut à gauche).
     var anchor = CGPoint(x: 160, y: 380)
 }
 
