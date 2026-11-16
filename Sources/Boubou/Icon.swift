@@ -74,3 +74,28 @@ struct Cross: Shape {
         return p
     }
 }
+
+extension IconArt {
+    /// `Boubou portraits <dossier>` : Boubou sur fond transparent, pour le site boubou.osalabs.fr.
+    @MainActor static func portraits(to dir: URL) throws {
+        try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        let poses: [(String, AnyView)] = [
+            ("coucou", AnyView(Boule(mood: .happy, arms: .wave, size: 220))),
+            ("curieux", AnyView(Boule(mood: .curious, size: 220))),
+            ("calme", AnyView(Boule(size: 220))),
+            ("inquiet", AnyView(Boule(mood: .worried, size: 220))),
+            ("triste", AnyView(Boule(mood: .sad, size: 220))),
+            ("tournis", AnyView(Boule(mood: .dizzy, size: 220))),
+            ("amour", AnyView(Boule(mood: .love, arms: .hug, size: 220))),
+            ("fete", AnyView(Boule(mood: .excited, arms: .up, size: 220, hat: true))),
+            ("lit", AnyView(BedView(size: 300))),
+        ]
+        for (name, view) in poses {
+            let r = ImageRenderer(content: view.padding(14))
+            r.scale = 2
+            guard let cg = r.cgImage else { throw NSError(domain: "Portraits", code: 1) }
+            try NSBitmapImageRep(cgImage: cg).representation(using: .png, properties: [:])!
+                .write(to: dir.appendingPathComponent("\(name).png"))
+        }
+    }
+}
