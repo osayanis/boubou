@@ -1,0 +1,113 @@
+{
+  "_lisezmoi": "Les phrases de Petite Boule. Modifie ce fichier sur GitHub (branche main) : l'app le relit toute seule (au lancement puis toutes les 3 h), pas besoin de publier une version. {prenom} = son prénom, {de} = le champ « de ». Une liste vide = on garde les phrases intégrées à l'app.",
+  "de": "Yanis",
+
+  "bonjour": [
+    "Bonjour {prenom} ☀️ Petite Boule de garde, prête pour la visite du matin.",
+    "Coucou {prenom} ! Nouvelle journée, nouvelle garde. On regarde ensemble ce qui t'attend ?",
+    "Bien dormi, docteur {prenom} ? Voilà ton programme du jour.",
+    "Debout la future meilleure médecin de France ! Voici ta journée."
+  ],
+  "bonjourTard": [
+    "Ah, te voilà {prenom} ! Petit point sur ta journée ?",
+    "Coucou {prenom} ! Je t'ai gardé ta liste au chaud."
+  ],
+  "journeeVide": [
+    "Rien de prévu aujourd'hui. Clique sur moi pour ajouter ce que tu veux faire, ou profite d'un jour plus calme : ça compte aussi.",
+    "Aucune tâche ni révision aujourd'hui. Tu as le droit de souffler, ça fait partie du programme."
+  ],
+
+  "questions": [
+    "Alors, ça se passe bien ?",
+    "Petite visite de contrôle : comment ça va ?",
+    "Tu tiens le coup, {prenom} ?",
+    "Comment ça avance, docteur ?",
+    "Je passe juste prendre ta tension : ça va ?"
+  ],
+  "reponsesBien": [
+    "Trop bien ! Continue comme ça 💪",
+    "Super ! Je suis fière de toi.",
+    "Génial. Pense quand même à boire un verre d'eau, docteur.",
+    "Ça me fait plaisir ! Je retourne dans mon coin, appelle-moi si besoin."
+  ],
+  "reponsesBof": [
+    "Tiens bon. Tu fais déjà beaucoup, même si ça ne se voit pas tout de suite.",
+    "Tiens bon {prenom}. Une chose à la fois, pas tout le programme d'un coup.",
+    "Les journées « bof » comptent aussi. On fait une petite pause ?",
+    "C'est normal d'avoir des moments comme ça. Tu veux qu'on souffle une minute ?"
+  ],
+  "reponsesMal": [
+    "C'est pas grave, on va trouver une solution.",
+    "Hé, c'est pas grave. Respire, on va trouver une solution ensemble.",
+    "Je suis là. C'est pas grave, on va y aller tout doucement.",
+    "Ça arrive à tout le monde, même aux meilleurs internes. On va trouver une solution."
+  ],
+
+  "petitsMots": [
+    "Tiens bon, {prenom}. Chaque fiche compte.",
+    "Rappel du docteur : un verre d'eau, maintenant 💧",
+    "Tes épaules sont remontées jusqu'aux oreilles, non ? Relâche-les un peu.",
+    "Règle des 20-20-20 : regarde au loin pendant 20 secondes, tes yeux te diront merci.",
+    "Ça fait un moment que tu es assise. Lève-toi deux minutes, étire-toi.",
+    "Tu as mangé un vrai repas aujourd'hui ? Le cerveau carbure au glucose, pas aux QCM.",
+    "Personne ne connaît tout le programme. Pas même tes profs.",
+    "Ce n'est pas un sprint, c'est un internat. Ménage-toi.",
+    "Envoie un petit message à quelqu'un que tu aimes bien, juste comme ça.",
+    "Ta valeur ne se résume pas à une note ou à un classement.",
+    "Tu as le droit de ne pas tout réussir du premier coup. Les J sont faits pour ça.",
+    "Et si tu ouvrais la fenêtre deux minutes ? Un peu d'air frais, ordonnance du docteur.",
+    "Même les grands médecins ont commencé par ne rien savoir.",
+    "Tu progresses plus que tu ne le crois. Promis."
+  ],
+
+  "tacheFaite": [
+    "Bien joué ! ✨",
+    "Et une de moins !",
+    "Yes ! Coche validée.",
+    "Bravo docteur !",
+    "Ça, c'est fait. Fière de toi."
+  ],
+  "toutFait": [
+    "Tout est coché pour aujourd'hui !! Tu peux être fière de toi 🎉",
+    "Journée bouclée ! Repose-toi, tu l'as bien mérité."
+  ],
+
+  "soir": [
+    "Petit bilan de la journée : tu as fait {faites} chose(s). Ce qui reste attendra demain, c'est très bien comme ça.",
+    "La garde se termine. {faites} chose(s) de faite(s) aujourd'hui, bravo. Pense à décrocher un peu ce soir."
+  ],
+  "tard": [
+    "Il est tard {prenom}… La mémoire se consolide en dormant : le meilleur révision-hack, c'est ton lit 🌙",
+    "Ordonnance de Petite Boule : extinction des feux. Ton cerveau rangera les fiches pendant la nuit."
+  ],
+
+  "defis": [
+    "Prendre 10 minutes dehors, sans écran",
+    "Envoyer un message à une amie",
+    "Boire 1,5 L d'eau dans la journée",
+    "Manger assise, loin des fiches",
+    "Appeler quelqu'un de ta famille",
+    "Faire une vraie pause déjeuner (pas devant un cours)",
+    "Écrire 3 choses qui se sont bien passées aujourd'hui",
+    "Marcher 15 minutes",
+    "Se coucher avant minuit",
+    "Faire quelque chose juste pour le plaisir, même 20 minutes",
+    "Écouter une chanson que tu adores, à fond",
+    "Ranger ton bureau en 5 minutes chrono"
+  ],
+
+  "petitsPas": [
+    "Ouvre juste le cours. Rien d'autre. On verra après.",
+    "Fais une seule fiche. Une seule.",
+    "10 QCM, et c'est tout.",
+    "Relis seulement les titres du chapitre.",
+    "Mets un minuteur de 15 minutes. Quand il sonne, tu as le droit d'arrêter.",
+    "Choisis la tâche la plus petite de ta liste et fais-la."
+  ],
+
+  "motsDoux": [
+    "{de} m'a demandé de te dire qu'il est très fier de toi.",
+    "{de} pense à toi. Il m'a dit de te le rappeler.",
+    "Message de {de} : « Tu vas y arriver. Et même si c'est dur, je suis là. »"
+  ]
+}
