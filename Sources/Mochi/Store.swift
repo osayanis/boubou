@@ -82,7 +82,7 @@ enum Corner: Int, Codable, CaseIterable {
 }
 
 struct Settings: Codable, Equatable {
-    var name = ""
+    var name = "Jeanne"
     var startHour = 8
     var endHour = 21
     var rhythm = Rhythm.normal
@@ -119,6 +119,9 @@ struct Saved: Codable {
     var challengeDone: String? = nil
     var lastContact: Date? = nil
     var checkins: [String: Int] = [:]
+    var sleepingSince: Date? = nil
+    var water: [String: Int] = [:]
+    var lastEvent: String? = nil
 
     init() {}
     init(from d: Decoder) throws {
@@ -133,10 +136,13 @@ struct Saved: Codable {
         challengeDone = try? c.decodeIfPresent(String.self, forKey: .challengeDone)
         lastContact = try? c.decodeIfPresent(Date.self, forKey: .lastContact)
         checkins = (try? c.decodeIfPresent([String: Int].self, forKey: .checkins)) ?? [:]
+        sleepingSince = try? c.decodeIfPresent(Date.self, forKey: .sleepingSince)
+        water = (try? c.decodeIfPresent([String: Int].self, forKey: .water)) ?? [:]
+        lastEvent = try? c.decodeIfPresent(String.self, forKey: .lastEvent)
     }
 }
 
-/// Tout ce que Petite Boule retient, dans ~/Library/Application Support/PetiteBoule/donnees.json.
+/// Tout ce que Mochi retient, dans ~/Library/Application Support/Mochi/donnees.json.
 /// (Rien ne quitte le Mac.)
 @MainActor
 final class Store: ObservableObject {
@@ -148,11 +154,11 @@ final class Store: ObservableObject {
     private var file: URL { folder.appendingPathComponent("donnees.json") }
 
     private init() {
-        if let custom = ProcessInfo.processInfo.environment["PETITEBOULE_DOSSIER"] {
+        if let custom = ProcessInfo.processInfo.environment["MOCHI_DOSSIER"] {
             folder = URL(fileURLWithPath: custom)
         } else {
             folder = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
-                .appendingPathComponent("PetiteBoule")
+                .appendingPathComponent("Mochi")
         }
         try? FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
         if let d = try? Data(contentsOf: file) {
@@ -277,6 +283,15 @@ final class Store: ObservableObject {
     var challengeDone: Bool {
         get { data.challengeDone == Day.key() }
         set { data.challengeDone = newValue ? Day.key() : nil }
+    }
+
+    // MARK: Eau
+
+    var waterToday: Int { data.water[Day.key()] ?? 0 }
+    func drink() {
+        data.water[Day.key()] = waterToday + 1
+        let old = Day.add(-14, to: Day.key())
+        data.water = data.water.filter { $0.key >= old }
     }
 
     // MARK: Humeur

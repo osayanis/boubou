@@ -22,55 +22,137 @@ final class FloatingPanel: NSPanel {
     override var canBecomeMain: Bool { false }
 }
 
-// MARK: - La mascotte
+// MARK: - Mochi
 
 private struct MascotView: View {
     @ObservedObject var coach: Coach
     var body: some View {
-        Boule(mood: coach.mood, arms: coach.arms, look: coach.look, size: MascotController.bodySize, hop: coach.hop, breath: coach.breath)
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
-            .padding(.bottom, 2)
+        ZStack(alignment: .bottom) {
+            if coach.sleeping {
+                BedView(size: 96)
+                    .transition(.scale(scale: 0.6, anchor: .bottom).combined(with: .opacity))
+            } else {
+                Boule(mood: coach.mood, arms: coach.arms, look: coach.look, size: MascotController.bodySize,
+                      hop: coach.hop, breath: coach.breath, tilt: coach.tilt, hat: coach.hat)
+                    .transition(.scale(scale: 0.6, anchor: .bottom).combined(with: .opacity))
+                    .padding(.bottom, 2)
+            }
+            if let end = coach.focusUntil, !coach.sleeping {
+                TimelineView(.periodic(from: .now, by: 1)) { tl in
+                    let left = max(0, Int(end.timeIntervalSince(tl.date)))
+                    Text(String(format: "%d:%02d", left / 60, left % 60))
+                        .font(.system(size: 10.5, weight: .heavy).monospacedDigit())
+                        .foregroundStyle(.black.opacity(0.8))
+                        .padding(.horizontal, 7).padding(.vertical, 2.5)
+                        .background(.white, in: Capsule())
+                        .shadow(color: .black.opacity(0.25), radius: 3, y: 1)
+                }
+                .offset(y: -60)
+            }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
+        .animation(.spring(response: 0.45, dampingFraction: 0.75), value: coach.sleeping)
     }
 }
 
-/// Reçoit clics et glisser-déposer pour toute la mascotte.
-private final class DragView: NSView {
+/// Clics, double-clics, glisser-déposer, caresses et secousses. Ne capte la souris que sur Mochi
+/// (ou son lit) : le reste du panneau laisse passer les clics vers les fenêtres derrière.
+private final class TouchView: NSView {
+    var hitRect: () -> NSRect = { .zero }
     var onClick: () -> Void = {}
+    var onDoubleClick: () -> Void = {}
     var onRightClick: (NSEvent) -> Void = { _ in }
     var onDrag: (NSPoint) -> Void = { _ in }
-    var onDrop: () -> Void = {}
+    var onDrop: (_ shaken: Bool) -> Void = { _ in }
+    var onShake: () -> Void = {}
+    var onPet: () -> Void = {}
+
     private var start: NSPoint?
     private var origin: NSPoint = .zero
     private var dragged = false
+    private var pending: DispatchWorkItem?
+    // secousse : demi-tours rapides pendant le glisser
+    private var lastX: CGFloat = 0, dir: CGFloat = 0, flips: [Date] = [], shook = false
+    // caresse : va-et-vient de la souris au-dessus de lui
+    private var petX: CGFloat = 0, petDir: CGFloat = 0, petFlips: [Date] = [], lastPet = Date.distantPast
 
-    override func hitTest(_ point: NSPoint) -> NSView? { frame.contains(point) ? self : nil }
+    override func hitTest(_ point: NSPoint) -> NSView? {
+        hitRect().contains(convert(point, from: superview)) ? self : nil
+    }
     override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
+
+    override func updateTrackingAreas() {
+        super.updateTrackingAreas()
+        trackingAreas.forEach(removeTrackingArea)
+        addTrackingArea(NSTrackingArea(rect: bounds, options: [.mouseMoved, .activeAlways, .inVisibleRect], owner: self))
+    }
+
+    override func mouseMoved(with e: NSEvent) {
+        let p = convert(e.locationInWindow, from: nil)
+        guard hitRect().contains(p) else { return }
+        let dx = p.x - petX
+        petX = p.x
+        guard abs(dx) > 1.5 else { return }
+        let d: CGFloat = dx > 0 ? 1 : -1
+        if d != petDir {
+            petDir = d
+            petFlips.append(Date())
+            petFlips.removeAll { Date().timeIntervalSince($0) > 1.6 }
+            if petFlips.count >= 5, Date().timeIntervalSince(lastPet) > 3 {
+                petFlips.removeAll(); lastPet = Date(); onPet()
+            }
+        }
+    }
 
     override func mouseDown(with e: NSEvent) {
         start = NSEvent.mouseLocation
         origin = window?.frame.origin ?? .zero
-        dragged = false
+        dragged = false; shook = false; flips = []; dir = 0; lastX = start!.x
     }
+
     override func mouseDragged(with e: NSEvent) {
         guard let start else { return }
         let p = NSEvent.mouseLocation
         if !dragged, hypot(p.x - start.x, p.y - start.y) < 4 { return }
         dragged = true
+        pending?.cancel()
         NSCursor.closedHand.set()
         onDrag(NSPoint(x: origin.x + p.x - start.x, y: origin.y + p.y - start.y))
+        let dx = p.x - lastX
+        lastX = p.x
+        if abs(dx) > 6 {
+            let d: CGFloat = dx > 0 ? 1 : -1
+            if d != dir {
+                dir = d
+                flips.append(Date())
+                flips.removeAll { Date().timeIntervalSince($0) > 1.2 }
+                if flips.count >= 5, !shook { shook = true; onShake() }
+            }
+        }
     }
+
     override func mouseUp(with e: NSEvent) {
-        if dragged { NSCursor.arrow.set(); onDrop() } else { onClick() }
-        start = nil
+        defer { start = nil }
+        if dragged { NSCursor.arrow.set(); onDrop(shook); return }
+        if e.clickCount >= 2 {
+            pending?.cancel(); pending = nil
+            onDoubleClick()
+        } else {
+            // on attend de savoir si c'est un double-clic
+            let w = DispatchWorkItem { [weak self] in self?.onClick() }
+            pending = w
+            DispatchQueue.main.asyncAfter(deadline: .now() + NSEvent.doubleClickInterval, execute: w)
+        }
     }
+
     override func rightMouseDown(with e: NSEvent) { onRightClick(e) }
 }
 
 @MainActor
 final class MascotController {
     static let bodySize: CGFloat = 46
-    static let panelSize = NSSize(width: 84, height: 84)
-    private static let margin: CGFloat = 6
+    static let panelSize = NSSize(width: 116, height: 116)
+    private static let margin: CGFloat = 2
 
     let panel = FloatingPanel(size: panelSize)
     private let coach = Coach.shared
@@ -81,35 +163,67 @@ final class MascotController {
     var menu: () -> NSMenu = { NSMenu() }
 
     init() {
-        let drag = DragView(frame: NSRect(origin: .zero, size: Self.panelSize))
+        let touch = TouchView(frame: NSRect(origin: .zero, size: Self.panelSize))
         let host = NSHostingView(rootView: MascotView(coach: coach))
-        host.frame = drag.bounds
+        host.frame = touch.bounds
         host.autoresizingMask = [.width, .height]
-        drag.addSubview(host)
-        drag.onClick = { [weak self] in self?.onClick() }
-        drag.onRightClick = { [weak self] e in
-            guard let self else { return }
-            NSMenu.popUpContextMenu(self.menu(), with: e, for: drag)
+        touch.addSubview(host)
+        touch.hitRect = { [weak self] in
+            guard let self else { return .zero }
+            let w = Self.panelSize.width
+            return self.coach.sleeping ? NSRect(x: (w - 100) / 2, y: 0, width: 100, height: 80)
+                                       : NSRect(x: (w - 70) / 2, y: 0, width: 70, height: 66)
         }
-        drag.onDrag = { [weak self] p in
-            self?.panel.setFrameOrigin(p)
+        touch.onClick = { [weak self] in self?.clicked() }
+        touch.onDoubleClick = { [weak self] in self?.doubleClicked() }
+        touch.onRightClick = { [weak self] e in
+            guard let self else { return }
+            NSMenu.popUpContextMenu(self.menu(), with: e, for: touch)
+        }
+        touch.onDrag = { [weak self] p in
+            guard let self, !self.coach.sleeping else { return }
+            self.panel.setFrameOrigin(p)
             BubbleController.shared.follow()
         }
-        drag.onDrop = { [weak self] in self?.snap() }
-        panel.contentView = drag
-        panel.setAccessibilityLabel("Petite Boule")
+        touch.onShake = { [weak self] in self?.coach.shaking() }
+        touch.onDrop = { [weak self] shaken in
+            guard let self, !self.coach.sleeping else { return }
+            self.snap()
+            if shaken { self.coach.shaken() }
+        }
+        touch.onPet = { [weak self] in self?.coach.petted() }
+        panel.contentView = touch
+        panel.acceptsMouseMovedEvents = true
+        panel.setAccessibilityLabel("Mochi")
 
         place(animated: false)
-        NotificationCenter.default.addObserver(forName: NSApplication.didChangeScreenParametersNotification, object: nil, queue: .main) { [weak self] _ in
-            MainActor.assumeIsolated { self?.place(animated: false) }
+        NotificationCenter.default.addObserver(forName: NSApplication.didChangeScreenParametersNotification, object: nil, queue: .main) { _ in
+            MainActor.assumeIsolated { AppDelegate.shared?.mascot.place(animated: false) }
         }
         coach.$hiddenUntil.receive(on: RunLoop.main).sink { [weak self] _ in
             DispatchQueue.main.async { self?.updateVisibility() }
         }.store(in: &bag)
+        coach.$sleeping.dropFirst().receive(on: RunLoop.main).sink { [weak self] _ in
+            DispatchQueue.main.async { self?.place(animated: true) }
+        }.store(in: &bag)
 
-        // Elle suit la souris des yeux quand on passe près d'elle (4 fois par seconde : presque rien).
-        lookTimer = Timer.scheduledTimer(withTimeInterval: 0.25, repeats: true) { [weak self] _ in
-            MainActor.assumeIsolated { self?.updateLook() }
+        lookTimer = Timer.scheduledTimer(withTimeInterval: 0.25, repeats: true) { _ in
+            MainActor.assumeIsolated { AppDelegate.shared?.mascot.updateLook() }
+        }
+    }
+
+    private func clicked() {
+        if coach.sleeping { return coach.wake() }
+        onClick()
+    }
+
+    private func doubleClicked() {
+        if coach.sleeping { return coach.wake() }
+        coach.onClosePanel()
+        coach.say(Messages.shared.pick("dodo"), mood: .sleepy, arms: .wave, autoHide: 1.8)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.4) { [weak self] in
+            self?.coach.dismiss()
+            self?.coach.sleep()
         }
     }
 
@@ -128,12 +242,14 @@ final class MascotController {
                        y: corner.bottom ? v.minY + m : v.maxY - s.height - m)
     }
 
+    /// À sa place : son coin, ou le lit en bas à droite de l'écran principal quand il dort.
     func place(animated: Bool) {
-        let o = origin(for: store.settings.corner, on: screen)
+        let o = coach.sleeping ? origin(for: .bottomRight, on: NSScreen.screens.first ?? screen)
+                               : origin(for: store.settings.corner, on: screen)
         if animated {
             NSAnimationContext.runAnimationGroup { ctx in
-                ctx.duration = 0.25
-                ctx.timingFunction = CAMediaTimingFunction(name: .easeOut)
+                ctx.duration = 0.35
+                ctx.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
                 panel.animator().setFrameOrigin(o)
             } completionHandler: {
                 MainActor.assumeIsolated { BubbleController.shared.follow() }
@@ -144,7 +260,7 @@ final class MascotController {
         }
     }
 
-    /// Lâchée : elle file au coin le plus proche (de l'écran où on l'a posée).
+    /// Lâché : il file au coin le plus proche (de l'écran où on l'a posé).
     private func snap() {
         let c = NSPoint(x: panel.frame.midX, y: panel.frame.midY)
         let scr = NSScreen.screens.first { $0.frame.contains(c) } ?? screen
@@ -156,24 +272,25 @@ final class MascotController {
         coach.hop += 1
     }
 
-    func setCorner(_ c: Corner) {
-        store.settings.corner = c
-        place(animated: true)
-    }
-
-    private func updateLook() {
-        guard panel.isVisible else { return }
+    func updateLook() {
+        guard panel.isVisible, !coach.sleeping else { return }
+        if let l = coach.idleLook { if l != coach.look { coach.look = l }; return }
         let m = NSEvent.mouseLocation
-        let dx = m.x - panel.frame.midX, dy = m.y - panel.frame.midY
+        let dx = m.x - panel.frame.midX, dy = m.y - (panel.frame.minY + 35)
         var target = CGSize.zero
         if hypot(dx, dy) < 420 {
             target = CGSize(width: max(-1, min(1, dx / 220)), height: max(-1, min(1, -dy / 220)))
         } else if coach.bubble != nil {
-            // pendant qu'elle parle, elle regarde vers sa bulle
             target = CGSize(width: store.settings.corner.right ? -0.6 : 0.6, height: store.settings.corner.bottom ? -0.3 : 0.3)
         }
         let r = CGSize(width: (target.width * 4).rounded() / 4, height: (target.height * 4).rounded() / 4)
         if r != coach.look { coach.look = r }
+    }
+
+    /// Le corps de Mochi, en coordonnées écran (pour coller la bulle et le panneau à côté).
+    var bodyFrame: NSRect {
+        let f = panel.frame
+        return NSRect(x: f.midX - 38, y: f.minY, width: 76, height: 70)
     }
 }
 
@@ -197,9 +314,6 @@ struct BubbleCard: View {
     let tailRight: Bool
     let tailBottom: Bool
     @State private var appear = false
-    @State private var typed = ""
-    @FocusState private var focused: Bool
-
     private let ink = Color(red: 0.11, green: 0.11, blue: 0.14)
 
     var body: some View {
@@ -225,28 +339,15 @@ struct BubbleCard: View {
                 Text(f).font(.system(size: 12, weight: .medium)).foregroundStyle(ink.opacity(0.7))
                     .fixedSize(horizontal: false, vertical: true)
             }
-            if let input = model.input {
-                HStack(spacing: 6) {
-                    TextField("", text: $typed, prompt: Text(model.inputPlaceholder).foregroundStyle(ink.opacity(0.4)))
-                        .textFieldStyle(.plain)
-                        .font(.system(size: 13, weight: .medium))
-                        .foregroundStyle(ink)
-                        .padding(.horizontal, 10).padding(.vertical, 7)
-                        .background(ink.opacity(0.06), in: Capsule())
-                        .focused($focused)
-                        .onSubmit { input(typed) }
-                    Button { input(typed) } label: { Text("OK") }
-                        .buttonStyle(PillStyle(primary: true, onLight: true))
-                        .disabled(typed.trimmingCharacters(in: .whitespaces).isEmpty)
-                }
-                .onAppear { DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { focused = true } }
-            }
             if !model.actions.isEmpty {
-                FlowButtons(actions: model.actions)
+                ViewThatFits(in: .horizontal) {
+                    HStack(spacing: 6) { buttons }
+                    VStack(alignment: .leading, spacing: 6) { buttons }
+                }
             }
         }
         .padding(14)
-        .frame(width: 268, alignment: .leading)
+        .frame(width: 262, alignment: .leading)
         .background {
             BubbleShape(tailRight: tailRight, tailBottom: tailBottom)
                 .fill(.white)
@@ -254,30 +355,20 @@ struct BubbleCard: View {
         }
         .padding(EdgeInsets(top: 10, leading: tailRight ? 14 : 24, bottom: 14, trailing: tailRight ? 24 : 14))
         .contentShape(Rectangle())
-        .onTapGesture { if model.actions.isEmpty && model.input == nil { Coach.shared.dismiss() } }
+        .onTapGesture { if model.actions.isEmpty { Coach.shared.dismiss() } }
         .scaleEffect(appear ? 1 : 0.6, anchor: UnitPoint(x: tailRight ? 1 : 0, y: tailBottom ? 1 : 0))
         .opacity(appear ? 1 : 0)
         .onAppear { withAnimation(.spring(response: 0.35, dampingFraction: 0.72)) { appear = true } }
     }
-}
 
-/// Les boutons de la bulle, à la ligne quand ils ne tiennent pas.
-private struct FlowButtons: View {
-    let actions: [BubbleAction]
-    var body: some View {
-        ViewThatFits(in: .horizontal) {
-            HStack(spacing: 6) { buttons }
-            VStack(alignment: .leading, spacing: 6) { buttons }
-        }
-    }
     @ViewBuilder private var buttons: some View {
-        ForEach(actions) { a in
+        ForEach(model.actions) { a in
             Button(a.title) { a.run() }.buttonStyle(PillStyle(primary: a.primary, onLight: true))
         }
     }
 }
 
-/// Bulle de BD avec sa petite queue vers la mascotte.
+/// Bulle de BD avec sa petite queue vers Mochi.
 struct BubbleShape: Shape {
     var tailRight: Bool
     var tailBottom: Bool
@@ -308,47 +399,43 @@ final class BubbleController {
     private init() {
         Coach.shared.$bubble
             .receive(on: RunLoop.main)
-            .sink { [weak self] b in
-                // après la mise à jour de la vue (le sink est appelé avant le changement effectif)
-                DispatchQueue.main.async { self?.update(b) }
-            }
+            .sink { [weak self] b in DispatchQueue.main.async { self?.update(b) } }
             .store(in: &bag)
     }
 
+    private var currentSide: (right: Bool, bottom: Bool) {
+        if Coach.shared.sleeping { return (true, true) }
+        let c = Store.shared.settings.corner
+        return (c.right, c.bottom)
+    }
+
     private func update(_ b: BubbleModel?) {
-        guard let b, let mascot, !Coach.shared.hidden else {
+        guard b != nil, mascot != nil, !Coach.shared.hidden else {
             NSAnimationContext.runAnimationGroup { $0.duration = 0.18; panel.animator().alphaValue = 0 } completionHandler: {
                 MainActor.assumeIsolated { if Coach.shared.bubble == nil { self.panel.orderOut(nil) } }
             }
             return
         }
-        let corner = Store.shared.settings.corner
-        if host == nil || side != (corner.right, corner.bottom) {
-            side = (corner.right, corner.bottom)
-            let h = NSHostingView(rootView: BubbleHost(coach: Coach.shared, tailRight: corner.right, tailBottom: corner.bottom))
+        let s = currentSide
+        if host == nil || side != s {
+            side = s
+            let h = NSHostingView(rootView: BubbleHost(coach: Coach.shared, tailRight: s.right, tailBottom: s.bottom))
             panel.contentView = h
             host = h
         }
-        panel.keyable = b.input != nil
         follow()
         panel.alphaValue = 1
-        if b.input != nil {
-            NSApp.activate(ignoringOtherApps: true)
-            panel.makeKeyAndOrderFront(nil)
-        } else {
-            panel.orderFrontRegardless()
-        }
-        _ = mascot
+        panel.orderFrontRegardless()
     }
 
-    /// Recolle la bulle à côté de la mascotte, à la bonne taille.
+    /// Recolle la bulle à côté de Mochi, à la bonne taille.
     func follow() {
-        guard let host, let m = mascot?.panel.frame else { return }
+        guard let host, let m = mascot?.bodyFrame else { return }
         host.layoutSubtreeIfNeeded()
         let size = host.fittingSize
         guard size.width > 1, size.height > 1 else { return }
-        let x = side.right ? m.minX - size.width + 18 : m.maxX - 18
-        let y = side.bottom ? m.minY + 18 : m.maxY - size.height - 18
+        let x = side.right ? m.minX - size.width + 14 : m.maxX - 14
+        let y = side.bottom ? m.minY + 16 : m.maxY - size.height - 16
         var f = NSRect(x: x, y: y, width: size.width, height: size.height)
         if let scr = mascot?.panel.screen?.visibleFrame {
             f.origin.y = min(max(f.origin.y, scr.minY), scr.maxY - f.height)

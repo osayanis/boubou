@@ -1,7 +1,7 @@
 import SwiftUI
 import AppKit
 
-/// L'icône : Petite Boule en docteur sur le fond sombre des apps Osa, avec une croix de pharmacie.
+/// L'icône : Mochi en docteur sur le fond sombre des apps Osa, avec une croix de pharmacie.
 struct IconArt: View {
     var body: some View {
         ZStack {
@@ -33,20 +33,32 @@ struct IconArt: View {
         }
     }
 
-    /// `PetiteBoule apercu <fichier.png>` : toutes les humeurs côte à côte, pour vérifier le dessin.
+    /// `Mochi apercu <fichier.png>` : toutes les humeurs côte à côte, pour vérifier le dessin.
     @MainActor static func preview(to file: URL) throws {
-        let moods: [Boule.Mood] = [.calm, .happy, .curious, .excited, .worried, .sad, .sleepy]
+        let moods: [Boule.Mood] = [.calm, .happy, .curious, .excited, .worried, .sad, .sleepy, .dizzy, .love]
         let v = VStack(spacing: 30) {
             HStack(spacing: 10) { ForEach(Array(moods.enumerated()), id: \.offset) { Boule(mood: $0.element, size: 160) } }
             HStack(spacing: 10) {
                 Boule(arms: .wave, size: 160); Boule(arms: .up, size: 160); Boule(arms: .hug, size: 160)
                 Boule(size: 160, breath: 1)
-                Boule(size: 56); Boule(size: 40)
+                Boule(mood: .excited, arms: .up, size: 160, hat: true)
+                Boule(arms: .up, size: 160, tilt: 14)
+                BedView(size: 300)
+                Boule(size: 56); Boule(size: 46)
             }
         }
         .padding(30).background(Color(red: 0.12, green: 0.12, blue: 0.15))
         let r = ImageRenderer(content: v)
         r.scale = 2
+        guard let cg = r.cgImage else { throw NSError(domain: "Apercu", code: 1) }
+        try NSBitmapImageRep(cgImage: cg).representation(using: .png, properties: [:])!.write(to: file)
+    }
+}
+
+extension IconArt {
+    @MainActor static func previewBed(to file: URL) throws {
+        let v = HStack(spacing: 40) { BedView(size: 360); BedView(size: 96) }.padding(40).background(Color(red: 0.12, green: 0.12, blue: 0.15))
+        let r = ImageRenderer(content: v); r.scale = 2
         guard let cg = r.cgImage else { throw NSError(domain: "Apercu", code: 1) }
         try NSBitmapImageRep(cgImage: cg).representation(using: .png, properties: [:])!.write(to: file)
     }

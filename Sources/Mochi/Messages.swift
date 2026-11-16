@@ -1,11 +1,11 @@
 import Foundation
 
-/// Les phrases de Petite Boule. Source : messages.json (dans l'app), remplacé par la version en ligne
+/// Les phrases de Mochi. Source : messages.json (dans l'app), remplacé par la version en ligne
 /// du dépôt GitHub dès qu'elle est lisible — Yanis peut changer les textes sans publier de version.
 @MainActor
 final class Messages: ObservableObject {
     static let shared = Messages()
-    static let remote = URL(string: "https://raw.githubusercontent.com/osayanis/petiteboule/main/messages.json")!
+    static let remote = URL(string: "https://raw.githubusercontent.com/osayanis/mochi/main/messages.json")!
 
     @Published private(set) var table: [String: Any] = [:]
     private var bundled: [String: Any] = [:]
@@ -54,6 +54,22 @@ final class Messages: ObservableObject {
     var from: String { (table["de"] as? String).flatMap { $0.isEmpty ? nil : $0 } ?? "Quelqu'un qui t'aime" }
 
     func list(_ key: String) -> [String] { (table[key] as? [String]) ?? [] }
+
+    /// L'OsaNotch de Yanis : code ami à 6 chiffres et nom.
+    var partner: (code: String, name: String)? {
+        guard let l = table["lien"] as? [String: Any], let c = l["code"] as? String, c.count == 6, c.allSatisfy(\.isNumber) else { return nil }
+        return (c, (l["nom"] as? String) ?? from)
+    }
+
+    /// L'évènement du jour (anniversaire de couple…), s'il y en a un.
+    var eventToday: (text: String, party: Bool)? {
+        let f = DateFormatter(); f.dateFormat = "MM-dd"
+        let today = f.string(from: Date())
+        for e in (table["evenements"] as? [[String: Any]]) ?? [] where (e["date"] as? String) == today {
+            if let t = e["texte"] as? String { return (fill(t), (e["fete"] as? Bool) ?? true) }
+        }
+        return nil
+    }
 
     /// Une phrase au hasard (jamais deux fois de suite la même), avec {prenom}, {de} et les variables.
     func pick(_ key: String, _ vars: [String: String] = [:]) -> String {

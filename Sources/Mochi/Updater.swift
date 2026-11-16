@@ -1,14 +1,14 @@
 import AppKit
 import ServiceManagement
 
-/// Mises à jour automatiques depuis les releases GitHub d'osayanis/petiteboule (dépôt public).
-/// La release « latest » contient PetiteBoule.zip (publish.sh l'y met). Vérifie au lancement puis
+/// Mises à jour automatiques depuis les releases GitHub d'osayanis/mochi (dépôt public).
+/// La release « latest » contient Mochi.zip (publish.sh l'y met). Vérifie au lancement puis
 /// toutes les 6 h ; installe toute seule, quand rien n'est ouvert à l'écran, puis se relance.
 @MainActor
 final class Updater: ObservableObject {
     static let shared = Updater()
-    static let repo = "osayanis/petiteboule"
-    static let asset = "PetiteBoule.zip"
+    static let repo = "osayanis/mochi"
+    static let asset = "Mochi.zip"
     static var currentVersion: String {
         Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "0.0.0"
     }
@@ -39,7 +39,7 @@ final class Updater: ObservableObject {
                 var req = URLRequest(url: URL(string: "https://api.github.com/repos/\(Self.repo)/releases/latest")!)
                 req.cachePolicy = .reloadIgnoringLocalCacheData
                 req.setValue("application/vnd.github+json", forHTTPHeaderField: "Accept")
-                req.setValue("PetiteBoule", forHTTPHeaderField: "User-Agent")
+                req.setValue("Mochi", forHTTPHeaderField: "User-Agent")
                 let (data, resp) = try await URLSession.shared.data(for: req)
                 guard (resp as? HTTPURLResponse)?.statusCode == 200,
                       let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
@@ -69,12 +69,12 @@ final class Updater: ObservableObject {
     private func download(_ url: URL, version: String) async throws -> (String, URL, URL) {
         let (tmp, resp) = try await URLSession.shared.download(from: url)
         guard (resp as? HTTPURLResponse)?.statusCode == 200 else { throw URLError(.badServerResponse) }
-        let work = FileManager.default.temporaryDirectory.appendingPathComponent("PetiteBoule-maj-\(UUID().uuidString)")
+        let work = FileManager.default.temporaryDirectory.appendingPathComponent("Mochi-maj-\(UUID().uuidString)")
         try FileManager.default.createDirectory(at: work, withIntermediateDirectories: true)
         let zip = work.appendingPathComponent(Self.asset)
         try FileManager.default.moveItem(at: tmp, to: zip)
         try Self.run("/usr/bin/ditto", ["-x", "-k", zip.path, work.path])
-        let app = work.appendingPathComponent("Petite Boule.app")
+        let app = work.appendingPathComponent("Mochi.app")
         // Même identifiant, signature intacte, et vraiment plus récente : sinon on ne touche à rien.
         guard let info = NSDictionary(contentsOf: app.appendingPathComponent("Contents/Info.plist")) as? [String: Any],
               info["CFBundleIdentifier"] as? String == Bundle.main.bundleIdentifier,
@@ -85,9 +85,10 @@ final class Updater: ObservableObject {
         return (v, app, work)
     }
 
-    /// Rien à l'écran (ni bulle, ni cabinet) : on remplace l'app et on la relance en silence.
+    /// Rien à l'écran (ni bulle, ni panneau, ni séance) : on remplace l'app et on la relance en silence.
     func installIfIdle() {
-        guard let r = ready, Coach.shared.bubble == nil, !Coach.shared.cabinetOpen, !Coach.shared.breathing else { return }
+        guard let r = ready, Coach.shared.bubble == nil, !Coach.shared.panelOpen, !Coach.shared.inSession,
+              !Coach.shared.focusing, !BubbleGame.shared.running else { return }
         let current = Bundle.main.bundlePath
         guard current.hasSuffix(".app") else { return }
         let script = r.work.appendingPathComponent("remplacer.sh")

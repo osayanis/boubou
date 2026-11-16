@@ -2,12 +2,12 @@
 import PackageDescription
 
 let package = Package(
-    name: "PetiteBoule",
+    name: "Mochi",
     platforms: [.macOS(.v14)],
     targets: [
         .executableTarget(
-            name: "PetiteBoule",
-            path: "Sources/PetiteBoule",
+            name: "Mochi",
+            path: "Sources/Mochi",
             swiftSettings: [.swiftLanguageMode(.v5)]
         )
     ]

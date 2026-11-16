@@ -1,20 +1,30 @@
 {
-  "_lisezmoi": "Les phrases de Petite Boule. Modifie ce fichier sur GitHub (branche main) : l'app le relit toute seule (au lancement puis toutes les 3 h), pas besoin de publier une version. {prenom} = son prénom, {de} = le champ « de ». Une liste vide = on garde les phrases intégrées à l'app.",
+  "_lisezmoi": "Les phrases de Mochi. Modifie ce fichier sur GitHub (branche main) : l'app le relit toute seule (au lancement puis toutes les 3 h), sans publier de version. {prenom} = son prénom, {de} = le champ « de ». Une liste vide = on garde les phrases intégrées à l'app. « evenements » : date au format MM-JJ.",
   "de": "Yanis",
+  "lien": { "code": "861559", "nom": "Yanis" },
+
+  "evenements": [
+    { "date": "10-08", "fete": true, "texte": "Joyeux anniversaire de couple, Jeanne & Yanis ! 💕🎉 Une année de plus à deux. Mochi est super fier de vous." }
+  ],
 
   "bonjour": [
-    "Bonjour {prenom} ☀️ Petite Boule de garde, prête pour la visite du matin.",
-    "Coucou {prenom} ! Nouvelle journée, nouvelle garde. On regarde ensemble ce qui t'attend ?",
-    "Bien dormi, docteur {prenom} ? Voilà ton programme du jour.",
-    "Debout la future meilleure médecin de France ! Voici ta journée."
+    "Bonjour {prenom} ☀️ Docteur Mochi au rapport, prêt pour la visite du matin.",
+    "Coucou {prenom} ! Nouvelle journée, nouvelle garde. Voilà ce qui t'attend :",
+    "Bien dormi, docteur {prenom} ? Voici ton programme.",
+    "Debout la future meilleure médecin de France ! Ta journée :",
+    "Bonjour bonjour ! Café, eau, et c'est parti :",
+    "Salut {prenom} 🌤️ On attaque doucement, une chose à la fois :"
   ],
   "bonjourTard": [
-    "Ah, te voilà {prenom} ! Petit point sur ta journée ?",
-    "Coucou {prenom} ! Je t'ai gardé ta liste au chaud."
+    "Ah, te voilà {prenom} ! Petit point sur ta journée :",
+    "Coucou {prenom} ! Je t'ai gardé ta liste au chaud :"
   ],
   "journeeVide": [
-    "Rien de prévu aujourd'hui. Clique sur moi pour ajouter ce que tu veux faire, ou profite d'un jour plus calme : ça compte aussi.",
-    "Aucune tâche ni révision aujourd'hui. Tu as le droit de souffler, ça fait partie du programme."
+    "Rien de prévu aujourd'hui. Clique sur moi pour ajouter des choses, ou profite d'un jour plus calme : ça compte aussi.",
+    "Aucune tâche ni révision aujourd'hui. Tu as le droit de souffler, c'est dans l'ordonnance."
+  ],
+  "accueil": [
+    "Coucou {prenom} ! Moi c'est Mochi, ton assistant de garde 🩺\nClique sur moi : ta journée. Double-clic : je vais dormir et je te laisse bosser. Secoue-moi : {de} saura que tu penses à lui 💕"
   ],
 
   "questions": [
@@ -22,19 +32,21 @@
     "Petite visite de contrôle : comment ça va ?",
     "Tu tiens le coup, {prenom} ?",
     "Comment ça avance, docteur ?",
-    "Je passe juste prendre ta tension : ça va ?"
+    "Je passe juste prendre ta tension : ça va ?",
+    "Bilan express : la forme ?"
   ],
   "reponsesBien": [
     "Trop bien ! Continue comme ça 💪",
-    "Super ! Je suis fière de toi.",
+    "Super ! Je suis fier de toi.",
     "Génial. Pense quand même à boire un verre d'eau, docteur.",
-    "Ça me fait plaisir ! Je retourne dans mon coin, appelle-moi si besoin."
+    "Ça me fait plaisir ! Je retourne dans mon coin.",
+    "Yes ! Tu gères 🔥"
   ],
   "reponsesBof": [
     "Tiens bon. Tu fais déjà beaucoup, même si ça ne se voit pas tout de suite.",
     "Tiens bon {prenom}. Une chose à la fois, pas tout le programme d'un coup.",
-    "Les journées « bof » comptent aussi. On fait une petite pause ?",
-    "C'est normal d'avoir des moments comme ça. Tu veux qu'on souffle une minute ?"
+    "Les journées « bof » comptent aussi. On souffle une minute ?",
+    "C'est normal d'avoir des moments comme ça. Petite pause ?"
   ],
   "reponsesMal": [
     "C'est pas grave, on va trouver une solution.",
@@ -46,18 +58,25 @@
   "petitsMots": [
     "Tiens bon, {prenom}. Chaque fiche compte.",
     "Rappel du docteur : un verre d'eau, maintenant 💧",
-    "Tes épaules sont remontées jusqu'aux oreilles, non ? Relâche-les un peu.",
-    "Règle des 20-20-20 : regarde au loin pendant 20 secondes, tes yeux te diront merci.",
-    "Ça fait un moment que tu es assise. Lève-toi deux minutes, étire-toi.",
-    "Tu as mangé un vrai repas aujourd'hui ? Le cerveau carbure au glucose, pas aux QCM.",
+    "Tes épaules sont remontées jusqu'aux oreilles, non ? Relâche-les.",
+    "Règle des 20-20-20 : regarde au loin 20 secondes, tes yeux te diront merci.",
+    "Ça fait un moment que tu es assise. Lève-toi deux minutes.",
+    "Tu as mangé un vrai repas ? Le cerveau carbure au glucose, pas aux QCM.",
     "Personne ne connaît tout le programme. Pas même tes profs.",
-    "Ce n'est pas un sprint, c'est un internat. Ménage-toi.",
-    "Envoie un petit message à quelqu'un que tu aimes bien, juste comme ça.",
+    "Ce n'est pas un sprint, c'est un marathon. Ménage-toi.",
+    "Envoie un petit message à quelqu'un que tu aimes bien.",
     "Ta valeur ne se résume pas à une note ou à un classement.",
-    "Tu as le droit de ne pas tout réussir du premier coup. Les J sont faits pour ça.",
-    "Et si tu ouvrais la fenêtre deux minutes ? Un peu d'air frais, ordonnance du docteur.",
+    "Pas réussi du premier coup ? Normal : les J sont faits pour ça.",
+    "Ouvre la fenêtre deux minutes. Ordonnance du docteur Mochi.",
     "Même les grands médecins ont commencé par ne rien savoir.",
-    "Tu progresses plus que tu ne le crois. Promis."
+    "Tu progresses plus que tu ne le crois. Promis.",
+    "Si tu bloques sur un truc depuis 20 minutes, passe au suivant. Tu y reviendras.",
+    "Un cours bien compris vaut mieux que trois survolés.",
+    "Fun fact : ton cerveau consomme 20 % de ton énergie. Nourris-le bien 🍎",
+    "Besoin d'air ? Mes bulles anti-stress sont dans le panneau 🫧",
+    "Tu veux que je me taise un moment ? Double-clic et je file au lit.",
+    "Respire un grand coup. Voilà. C'est déjà mieux.",
+    "Je crois en toi. Bon, je suis une boule, mais je crois en toi."
   ],
 
   "tacheFaite": [
@@ -65,7 +84,8 @@
     "Et une de moins !",
     "Yes ! Coche validée.",
     "Bravo docteur !",
-    "Ça, c'est fait. Fière de toi."
+    "Ça, c'est fait.",
+    "Trop forte 💪"
   ],
   "toutFait": [
     "Tout est coché pour aujourd'hui !! Tu peux être fière de toi 🎉",
@@ -73,27 +93,84 @@
   ],
 
   "soir": [
-    "Petit bilan de la journée : tu as fait {faites} chose(s). Ce qui reste attendra demain, c'est très bien comme ça.",
-    "La garde se termine. {faites} chose(s) de faite(s) aujourd'hui, bravo. Pense à décrocher un peu ce soir."
+    "Petit bilan : tu as fait {faites} chose(s) aujourd'hui. Ce qui reste attendra demain, c'est très bien comme ça.",
+    "La garde se termine. {faites} chose(s) de faite(s), bravo. Pense à décrocher un peu ce soir."
   ],
   "tard": [
-    "Il est tard {prenom}… La mémoire se consolide en dormant : le meilleur révision-hack, c'est ton lit 🌙",
-    "Ordonnance de Petite Boule : extinction des feux. Ton cerveau rangera les fiches pendant la nuit."
+    "Il est 22 h 30 passées {prenom}… La mémoire se consolide en dormant : le meilleur révision-hack, c'est ton lit 🌙",
+    "Ordonnance de Mochi : extinction des feux. Ton cerveau rangera les fiches pendant la nuit.",
+    "Moi je vais bientôt me coucher… et toi aussi, d'accord ? 🌙"
+  ],
+
+  "dodo": [
+    "Je file au lit, bon courage ! 😴",
+    "Chut, je dors. Bosse bien !",
+    "Bonne concentration, je fais une sieste."
+  ],
+  "reveil": [
+    "*bâille* Coucou ! Ça a bien avancé ?",
+    "Hmm… déjà ? Me revoilà !",
+    "Bien dormi, moi. Et toi, bien bossé ?"
+  ],
+  "caresse": [
+    "Hihi, ça chatouille !",
+    "Encore, encore !",
+    "Ronron… euh, je suis pas un chat.",
+    "😊"
+  ],
+  "tournis": [
+    "Ouh là… la tête qui tourne 😵‍💫",
+    "Wouaaah ! Doucement !",
+    "J'ai vu des étoiles…"
+  ],
+  "penseEnvoye": [
+    "C'est envoyé : {de} sait que tu penses à lui 💕",
+    "Message livré à {de} 💌"
+  ],
+  "penseEnAttente": [
+    "Je le dirai à {de} dès que son Mac sera allumé 💌"
+  ],
+  "yanisPense": [
+    "{de} pense à toi 💕",
+    "Psst… {de} vient de penser très fort à toi 💕",
+    "Livraison spéciale : un câlin de la part de {de} 🤗",
+    "Bip bip, message de {de} : il pense à toi ❤️"
+  ],
+  "yanisPendantSieste": [
+    "Pendant que tu bossais, {de} a pensé à toi 💕"
+  ],
+  "focusFin": [
+    "Focus terminé ! 🎉 25 minutes de vrai travail. Une pause ?",
+    "Et voilà 25 minutes bien remplies ! Tu mérites une pause."
+  ],
+  "eau": [
+    "Glou glou 💧",
+    "Hydratation validée !",
+    "Tes reins te disent merci."
+  ],
+  "eauObjectif": [
+    "8 verres ! Objectif hydratation atteint 💧🏆"
+  ],
+  "bulles": [
+    "{n} bulles éclatées ! Ça détend, hein ?",
+    "{n} bulles ! Record ? Allez, on retourne bosser tranquille."
   ],
 
   "defis": [
     "Prendre 10 minutes dehors, sans écran",
     "Envoyer un message à une amie",
-    "Boire 1,5 L d'eau dans la journée",
+    "Boire 8 verres d'eau",
     "Manger assise, loin des fiches",
     "Appeler quelqu'un de ta famille",
-    "Faire une vraie pause déjeuner (pas devant un cours)",
+    "Faire une vraie pause déjeuner",
     "Écrire 3 choses qui se sont bien passées aujourd'hui",
     "Marcher 15 minutes",
-    "Se coucher avant minuit",
+    "Se coucher avant 23 h",
     "Faire quelque chose juste pour le plaisir, même 20 minutes",
     "Écouter une chanson que tu adores, à fond",
-    "Ranger ton bureau en 5 minutes chrono"
+    "Ranger ton bureau en 5 minutes chrono",
+    "Faire les étirements avec Mochi",
+    "Un focus de 25 minutes sans téléphone"
   ],
 
   "petitsPas": [
@@ -101,7 +178,7 @@
     "Fais une seule fiche. Une seule.",
     "10 QCM, et c'est tout.",
     "Relis seulement les titres du chapitre.",
-    "Mets un minuteur de 15 minutes. Quand il sonne, tu as le droit d'arrêter.",
+    "Lance un focus de 25 minutes. Quand il sonne, tu as le droit d'arrêter.",
     "Choisis la tâche la plus petite de ta liste et fais-la."
   ],
 
