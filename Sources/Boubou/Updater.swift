@@ -30,7 +30,9 @@ final class Updater: ObservableObject {
     }
 
     func check(manual: Bool = false) {
-        guard !busy, ready == nil else { if manual, let r = ready { status = "Version \(r.version) prête, elle s'installe dans un instant" }; return }
+        // Clic sur « MAJ » alors qu'une version attend : on l'installe tout de suite.
+        if manual, ready != nil { return installIfIdle(now: true) }
+        guard !busy, ready == nil else { return }
         busy = true
         if manual { status = "Recherche…" }
         Task {
@@ -59,7 +61,7 @@ final class Updater: ObservableObject {
                 let r = try await download(url, version: latest)
                 ready = r
                 status = "Version \(latest) prête, elle s'installe dans un instant"
-                installIfIdle()
+                installIfIdle(now: manual)
             } catch {
                 if manual { status = "Impossible de vérifier (pas d'internet ?)" }
             }
@@ -86,11 +88,19 @@ final class Updater: ObservableObject {
     }
 
     /// Rien à l'écran (ni bulle, ni panneau, ni séance) : on remplace l'app et on la relance en silence.
-    func installIfIdle() {
-        guard let r = ready, Coach.shared.bubble == nil, !Coach.shared.panelOpen, !Coach.shared.inSession,
-              !Coach.shared.focusing, !BubbleGame.shared.running else { return }
+    /// `now` : elle a cliqué sur « MAJ », on n'attend pas que le panneau se ferme.
+    func installIfIdle(now: Bool = false) {
+        guard let r = ready else { return }
+        if !now {
+            guard Coach.shared.bubble == nil, !Coach.shared.panelOpen, !Coach.shared.inSession,
+                  !Coach.shared.focusing, !BubbleGame.shared.running else { return }
+        }
         let current = Bundle.main.bundlePath
         guard current.hasSuffix(".app") else { return }
+        // Lancée depuis le .dmg ou les Téléchargements sans être rangée : macOS l'isole, impossible de la remplacer.
+        guard !current.contains("/AppTranslocation/"), !current.hasPrefix("/Volumes/") else {
+            status = "Range Boubou dans Applications pour qu'il se mette à jour"; return
+        }
         let script = r.work.appendingPathComponent("remplacer.sh")
         let text = """
         #!/bin/bash
