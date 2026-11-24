@@ -40,6 +40,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         }
         Link.shared.onLove = { name in Coach.shared.yanisLove(name) }
         Link.shared.start()
+        CarrotController.shared.mascot = mascot
+        Foyer.shared.start()
         coach.start()
         Updater.shared.start()
 
@@ -72,7 +74,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         func awake(_ run: @escaping () -> Void) -> () -> Void {
             { self.coach.show(); self.mascot.updateVisibility(); self.coach.wake(silent: true); run() }
         }
-        item("Ma journée") { awake { self.quick.open() }() }
+        func onglet(_ o: String) { UserDefaults.standard.set(o, forKey: "BoubouOnglet") }
+        item("Ma journée") { awake { onglet("journee"); self.quick.open() }() }
+        item("S'occuper de Boubou") { awake { onglet("boubou"); self.quick.open() }() }
+        item("Écrire un mot à \(Messages.shared.partner?.name ?? "Yanis")") {
+            awake { onglet("boubou"); Foyer.shared.ecrire = true; self.quick.open() }()
+        }
         item(coach.sleeping ? "Réveiller Boubou" : "Boubou va dormir (double-clic)") {
             self.coach.sleeping ? self.coach.wake() : self.coach.sleep()
         }

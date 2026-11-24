@@ -37,6 +37,8 @@ final class Coach: ObservableObject {
     @Published var hiddenUntil: Date? = nil
     @Published var sleeping = false
     @Published var focusUntil: Date? = nil
+    /// Une petite scène du foyer à la place de Boubou : "bain" (baignoire), "cuisine" (marmite).
+    @Published var scene: String? = nil
 
     var panelOpen = false
     var onTogglePanel: () -> Void = {}
@@ -91,6 +93,7 @@ final class Coach: ObservableObject {
             if bubble == nil, !panelOpen { onboarding() }
             return
         }
+        if !hidden, !sleeping, Presence.here { Foyer.shared.verifierCarotte() }
         guard bubble == nil, !inSession, !hidden, !sleeping, !focusing, !panelOpen, !BubbleGame.shared.running,
               Presence.here, !Presence.busy else { return }
 
@@ -125,6 +128,8 @@ final class Coach: ObservableObject {
             }
             return nudge()
         }
+        // ce que Yanis a fait pour Boubou, puis ce dont Boubou a besoin
+        if hour >= 7, !late, Foyer.shared.raconter() { return }
         if now >= nextIdle { idle() }
     }
 
@@ -309,6 +314,7 @@ final class Coach: ObservableObject {
         hop += 1
         FX.shared.burst(.hearts)
         if bubble == nil, Double.random(in: 0...1) < 0.4 { say(msg.pick("caresse"), mood: .love, arms: .hug, autoHide: 3) }
+        Foyer.shared.caresse()
     }
 
     /// Secoué pendant qu'elle le tient.
@@ -357,8 +363,9 @@ final class Coach: ObservableObject {
 
     // MARK: Le lit (double-clic) : il la laisse tranquille
 
-    func sleep() {
+    func sleep(depuisFoyer: Bool = false) {
         guard !sleeping else { return }
+        if !depuisFoyer, Foyer.shared.etat?.dort == false { Task { await Foyer.shared.geste("dodo") } }
         endSession()
         stopFocus(silent: true)
         bubble = nil
@@ -371,6 +378,7 @@ final class Coach: ObservableObject {
         guard sleeping else { return }
         sleeping = false
         store.data.sleepingSince = nil
+        if Foyer.shared.etat?.dort == true { Task { await Foyer.shared.geste("reveil") } }
         nextIdle = Date().addingTimeInterval(240)
         if silent { setMood(.calm); return }
         setMood(.happy, arms: .up, for: 2)
@@ -397,6 +405,7 @@ final class Coach: ObservableObject {
             try? await Task.sleep(for: .seconds(minutes * 60))
             guard !Task.isCancelled, let self else { return }
             self.focusUntil = nil
+            Foyer.shared.etoiles("focus", cle: "focus-\(Int(Date().timeIntervalSince1970))")
             if self.sleeping { return }
             FX.shared.burst(.confetti)
             self.say(self.msg.pick("focusFin"), mood: .excited, arms: .up,
@@ -435,6 +444,7 @@ final class Coach: ObservableObject {
             }
             guard !Task.isCancelled, let self else { return }
             self.sessionTask = nil
+            Foyer.shared.etoiles("respiration", cle: "respiration")
             self.say("Voilà. Ton cœur a ralenti un peu. Tu peux y retourner tout doucement 💛", mood: .happy, arms: .up, autoHide: 8)
         }
     }
@@ -506,6 +516,10 @@ final class Coach: ObservableObject {
     }
 
     func bubblesDone(_ n: Int) {
+        if n > 0 {
+            Task { await Foyer.shared.geste("jouer", ["score": min(n, 60)]) }
+            if n >= 10 { Foyer.shared.etoiles("bulles", cle: "bulles-\(Int(Date().timeIntervalSince1970))") }
+        }
         say(msg.pick("bulles", ["n": "\(n)"]), mood: .happy, arms: .up, autoHide: 7)
         if n >= 25 { FX.shared.burst(.confetti) }
     }

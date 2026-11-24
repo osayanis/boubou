@@ -10,15 +10,25 @@ struct QuickPanel: View {
     @State private var text = ""
     @State private var showHelp = false
     @State private var showSettings = false
+    @AppStorage("BoubouOnglet") private var onglet = "journee"
+    @ObservedObject private var foyer = Foyer.shared
     @FocusState private var focused: Bool
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             header
-            list
-            addRow
-            pauses
-            moodRow
+            tabs
+            if onglet == "boubou" {
+                FoyerView().transition(.opacity)
+            } else {
+                Group {
+                    list
+                    addRow
+                    pauses
+                    moodRow
+                }
+                .transition(.opacity)
+            }
             if showHelp { help.transition(.opacity.combined(with: .move(edge: .top))) }
             if showSettings { SettingsBlock().transition(.opacity.combined(with: .move(edge: .top))) }
         }
@@ -29,7 +39,8 @@ struct QuickPanel: View {
         .preferredColorScheme(.dark)
         .animation(.snappy(duration: 0.22), value: showHelp)
         .animation(.snappy(duration: 0.22), value: showSettings)
-        .onAppear { focused = true }
+        .animation(.snappy(duration: 0.22), value: onglet)
+        .onAppear { focused = onglet == "journee"; if onglet == "boubou" { Task { await foyer.rafraichir() } } }
     }
 
     // MARK: En-tête
@@ -49,6 +60,33 @@ struct QuickPanel: View {
             }
             .buttonStyle(.plain).help("Réglages")
         }
+    }
+
+    // MARK: Ma journée | Boubou
+
+    private var tabs: some View {
+        let e = foyer.etat
+        let alerte = e.map { $0.besoin != nil || $0.potager.contains { $0?.prete == true } } ?? false
+        return HStack(spacing: 4) {
+            tab("journee", "Ma journée", alerte: false)
+            tab("boubou", "Boubou", alerte: alerte)
+        }
+        .padding(3)
+        .background(.white.opacity(0.06), in: Capsule())
+    }
+
+    private func tab(_ id: String, _ titre: String, alerte: Bool) -> some View {
+        Button { onglet = id; showHelp = false; showSettings = false } label: {
+            HStack(spacing: 5) {
+                Text(titre).font(.system(size: 12, weight: .bold))
+                if alerte { Circle().fill(Theme.soft).frame(width: 6, height: 6) }
+            }
+            .foregroundStyle(onglet == id ? .black : .white.opacity(0.6))
+            .frame(maxWidth: .infinity).padding(.vertical, 6)
+            .background(onglet == id ? Color.white : .clear, in: Capsule())
+            .contentShape(Capsule())
+        }
+        .buttonStyle(.plain)
     }
 
     // MARK: La liste du jour
@@ -196,7 +234,9 @@ private struct TodoRow: View {
     var body: some View {
         HStack(spacing: 10) {
             Button {
-                withAnimation(.snappy) { if Store.shared.toggle(todo) { Coach.shared.celebrate() } }
+                withAnimation(.snappy) {
+                    if Store.shared.toggle(todo) { Coach.shared.celebrate(); Foyer.shared.etoiles("tache", cle: "t\(todo.id)") }
+                }
             } label: {
                 HStack(spacing: 10) {
                     CheckCircle(on: todo.done)
@@ -231,7 +271,9 @@ private struct ReviewRow: View {
     var body: some View {
         HStack(spacing: 10) {
             Button {
-                withAnimation(.snappy) { if Store.shared.toggleReview(course) { Coach.shared.celebrate() } }
+                withAnimation(.snappy) {
+                    if Store.shared.toggleReview(course) { Coach.shared.celebrate(); Foyer.shared.etoiles("revision", cle: "r\(course.id)") }
+                }
             } label: {
                 HStack(spacing: 10) {
                     CheckCircle(on: done)
@@ -263,7 +305,7 @@ private struct ChallengeRow: View {
     var body: some View {
         Button {
             withAnimation(.snappy) { store.challengeDone.toggle() }
-            if store.challengeDone { Coach.shared.celebrate() }
+            if store.challengeDone { Coach.shared.celebrate(); Foyer.shared.etoiles("defi", cle: "defi") }
         } label: {
             HStack(spacing: 10) {
                 CheckCircle(on: store.challengeDone)

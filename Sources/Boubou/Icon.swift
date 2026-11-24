@@ -46,6 +46,13 @@ struct IconArt: View {
                 BedView(size: 300)
                 Boule(size: 56); Boule(size: 46)
             }
+            HStack(spacing: 10) {
+                ForEach(["toque", "echarpe", "bonnet", "lunettes", "noeud", "couronne"], id: \.self) { Boule(mood: .happy, size: 160, accessoire: $0) }
+                Boule(mood: .worried, size: 160, malade: true)
+                Boule(mood: .sad, size: 160, sale: true)
+                BathView(size: 260); PotView(size: 260)
+                CarrotSprout(size: 90); CarrotSprout(size: 90, arrachee: true); CarrotSprout(size: 90, doree: true)
+            }
         }
         .padding(30).background(Color(red: 0.12, green: 0.12, blue: 0.15))
         let r = ImageRenderer(content: v)

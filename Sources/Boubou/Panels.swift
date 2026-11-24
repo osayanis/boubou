@@ -26,16 +26,36 @@ final class FloatingPanel: NSPanel {
 
 private struct MascotView: View {
     @ObservedObject var coach: Coach
+    @ObservedObject var foyer = Foyer.shared
     var body: some View {
         ZStack(alignment: .bottom) {
             if coach.sleeping {
                 BedView(size: 96)
                     .transition(.scale(scale: 0.6, anchor: .bottom).combined(with: .opacity))
+            } else if coach.scene == "bain" {
+                BathView(size: 96)
+                    .transition(.scale(scale: 0.6, anchor: .bottom).combined(with: .opacity))
+            } else if coach.scene == "cuisine" {
+                PotView(size: 92)
+                    .transition(.scale(scale: 0.6, anchor: .bottom).combined(with: .opacity))
             } else {
-                Boule(mood: coach.mood, arms: coach.arms, look: coach.look, size: MascotController.bodySize,
-                      hop: coach.hop, breath: coach.breath, tilt: coach.tilt, hat: coach.hat)
+                let e = foyer.etat
+                // l'humeur du foyer quand rien d'autre ne se passe (faim, rhume, fatigue…)
+                Boule(mood: coach.mood == .calm ? (e?.mood ?? .calm) : coach.mood, arms: coach.arms, look: coach.look,
+                      size: MascotController.bodySize,
+                      hop: coach.hop, breath: coach.breath, tilt: coach.tilt, hat: coach.hat,
+                      accessoire: e?.accessoire, malade: e?.malade ?? false, sale: (e?.stat("toilette") ?? 100) < 20)
                     .transition(.scale(scale: 0.6, anchor: .bottom).combined(with: .opacity))
                     .padding(.bottom, 2)
+            }
+            if let b = foyer.etat?.besoin, !coach.sleeping, coach.scene == nil, coach.focusUntil == nil, coach.bubble == nil {
+                Text(b).font(.system(size: 12))
+                    .padding(4)
+                    .background(.white, in: Circle())
+                    .shadow(color: .black.opacity(0.25), radius: 3, y: 1)
+                    .offset(x: 22, y: -52)
+                    .transition(.scale.combined(with: .opacity))
+                    .help("Boubou a besoin de toi")
             }
             if let end = coach.focusUntil, !coach.sleeping {
                 TimelineView(.periodic(from: .now, by: 1)) { tl in
@@ -52,6 +72,7 @@ private struct MascotView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
         .animation(.spring(response: 0.45, dampingFraction: 0.75), value: coach.sleeping)
+        .animation(.spring(response: 0.45, dampingFraction: 0.75), value: foyer.etat?.besoin)
     }
 }
 

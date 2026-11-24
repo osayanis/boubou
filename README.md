@@ -30,13 +30,41 @@ Et quand **Yanis clique 3 fois sur la mascotte de son OsaNotch**, Boubou fait un
 cœur, une fontaine de cœurs : « Yanis pense à toi 💕 » (s'il dort, seulement des cœurs, et elle le saura
 au réveil).
 
+## Boubou, on l'élève à deux (0.4)
+
+Onglet **Boubou** du panneau (ou clic droit → « S'occuper de Boubou »). L'état vit sur
+`boubou.osalabs.fr` (dépôt privé `boubou-site`, contrat dans `docs/foyer.md`) : Jeanne s'en occupe ici,
+Yanis depuis l'onglet 🥕 de son OsaNotch (≥ 1.0.14).
+
+- **4 jauges** : ventre, câlins, toilette, énergie. Elles baissent doucement (presque pas la nuit).
+  Boubou ne meurt jamais : laissé à l'abandon, il **s'enrhume** (écharpe, nez qui coule) et il faut
+  une soupe, un velouté ou une tisane pour le guérir.
+- **Ses besoins se voient sur lui** : petite bulle 🍽️ 🛁 💤 au-dessus de sa tête, mine inquiète, taches
+  quand il est sale, et il le dit de temps en temps (« J'ai un petit creux… »).
+- **Potager** de 6 cases à deux : planter, arroser (pousse 35 % plus vite), récolter.
+- **Carottes sauvages** : toutes les 90 min une carotte pousse à côté de Boubou sur le bureau, un clic
+  pour l'arracher (8 % de chances : une carotte dorée ✨).
+- **Cuisine** : 2 ou 3 ingrédients dans la marmite → une des 17 recettes (crêpes, soupe de carottes,
+  gâteau, velouté de potiron…) ou un plat mystère. Carnet de recettes à découvrir, plats au frigo.
+- **Étoiles ⭐** : gagnées en travaillant (tâche +2, révision +3, focus +3, défi +2, bulles et
+  respiration +1 ; 40 par jour), dépensées à l'épicerie. Yanis, lui, fait les **courses** 1 fois par jour.
+- **Niveaux** : P1 → Externe → Interne → Docteur → Chef de clinique → Professeur, chacun débloque un
+  accessoire (toque, écharpe, bonnet, lunettes, nœud papillon, couronne de fleurs) dans la garde-robe.
+- **Soins animés** : bain (baignoire + canard), marmite qui mijote, câlins (caresser Boubou compte aussi),
+  jouer = les bulles, dodo (double-clic) synchronisé avec le foyer.
+- **Journal à deux** : chaque geste s'écrit ; quand Yanis s'est occupé de Boubou, Boubou le raconte
+  (« Yanis m'a fait des crêpes ! »).
+- **💌 Un mot pour Yanis** : Jeanne écrit, Yanis le reçoit en bannière dans son notch. À sens unique :
+  il ne peut pas répondre par là.
+
 ## Le fil Boubou ↔ OsaNotch
 
 Par le relais « Amis » du serveur OsaDrop (socket.io, `friend-send`). Boubou écoute sur son propre code à
 6 chiffres et écrit au code de l'OsaNotch de Yanis (`lien` dans `messages.json`). Il se présente tout seul
 (`mochi_hello`) : OsaNotch (≥ 1.0.13) l'enregistre, et ce n'est qu'alors que les 3 clics sur sa mascotte
 envoient un cœur — la fonction n'existe que chez Yanis. Un message qui n'a pas pu partir (Mac éteint)
-repart à la reconnexion, pendant 12 h.
+repart à la reconnexion, pendant 12 h. Depuis 0.4, `mochi_hello` porte aussi le secret du foyer et
+`boubou_maj` prévient l'autre app qu'il faut relire l'état (le serveur reste la source de vérité).
 
 ## Modifier les phrases (sans publier de version)
 
@@ -52,7 +80,13 @@ format `MM-JJ`). Modifie-le et pousse sur `main` : l'app le relit au lancement p
 .build/release/Boubou apercu /tmp/m.png   # toutes les humeurs ;  `Boubou lit /tmp/lit.png` : le lit
 BOUBOU_DOSSIER=/tmp/m BOUBOU_DEMO=matin ./Boubou.app/Contents/MacOS/Boubou
 # scènes : matin question bien bof mal respire etire bulles focus dodo reveil caresse secoue yanis anniversaire eau panneau idle
+#          bain cuisine carotte niveau foyer mot
+# le foyer, jamais contre la prod (le premier secret inscrit devient LE foyer) :
+#   cd ../boubou-site && BOUBOU_DEV=1 PORT=3083 BOUBOU_DATA=/tmp/fy node server.js
+BOUBOU_API=http://127.0.0.1:3083 .build/release/Boubou essai-foyer            # tous les gestes, de bout en bout
+.build/release/Boubou apercu-foyer etat.json jeu.json /tmp/captures           # l'onglet Boubou hors écran
 ```
+Une Boubou lancée avec `BOUBOU_DOSSIER` ou `BOUBOU_DEMO` sans `BOUBOU_API` ne se connecte pas au foyer.
 
 ⚠️ Lancer Boubou sur le Mac de Yanis l'appaire à l'OsaNotch de Yanis à la place de celui de Jeanne
 (jusqu'au prochain lancement du sien). Pour nettoyer : `defaults delete com.osalabs.boubou`.

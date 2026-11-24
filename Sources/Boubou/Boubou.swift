@@ -19,6 +19,12 @@ struct Boule: View {
     var hat = false
     /// Sans accessoires ni bras (couché sous la couverture).
     var plain = false
+    /// Ce qu'il porte : toque, echarpe, bonnet, lunettes, noeud, couronne (voir le foyer).
+    var accessoire: String? = nil
+    /// Enrhumé : nez rouge, thermomètre, joues en feu.
+    var malade = false
+    /// Pas lavé depuis longtemps : quelques taches.
+    var sale = false
 
     @State private var blink = false
     @State private var swing = false
@@ -54,10 +60,26 @@ struct Boule: View {
                 bodyShape
                     .fill(RadialGradient(colors: [light, light, shade], center: UnitPoint(x: 0.35, y: 0.28), startRadius: 0, endRadius: w * 0.78))
                 coat.clipShape(bodyShape)
+                if sale { taches.clipShape(bodyShape) }
                 bodyShape.strokeBorder(.white.opacity(0.6), lineWidth: 1).blur(radius: 0.5)
                 stethoscope
-                face.offset(x: look.width * w * 0.05, y: look.height * w * 0.035)
-                if plain { EmptyView() } else if hat { partyHat } else { headMirror.offset(x: look.width * w * 0.03, y: look.height * w * 0.02) }
+                if accessoire == "echarpe" { Accessoires.echarpe(w: w, h: h) }
+                if accessoire == "noeud" { Accessoires.noeud(w: w, h: h) }
+                ZStack {
+                    face
+                    if malade { Accessoires.rhume(w: w) }
+                    if accessoire == "lunettes" { Accessoires.lunettes(w: w) }
+                }
+                .offset(x: look.width * w * 0.05, y: look.height * w * 0.035)
+                Group {
+                    if plain { EmptyView() }
+                    else if hat { partyHat }
+                    else if accessoire == "toque" { Accessoires.toque(w: w, h: h) }
+                    else if accessoire == "bonnet" { Accessoires.bonnet(w: w, h: h) }
+                    else if accessoire == "couronne" { Accessoires.couronne(w: w, h: h) }
+                    else { headMirror }
+                }
+                .offset(x: look.width * w * 0.03, y: look.height * w * 0.02)
             }
             .frame(width: w, height: h)
             .scaleEffect(x: 1 + breath * 0.07, y: 1 + breath * 0.1, anchor: .bottom)
@@ -89,6 +111,17 @@ struct Boule: View {
             }
         }
         .accessibilityHidden(true)
+    }
+
+    // Quelques taches de boue quand il n'a pas pris de bain depuis longtemps.
+    private var taches: some View {
+        let w = size, h = size * 0.92, boue = Color(red: 0.55, green: 0.42, blue: 0.3)
+        return ZStack {
+            Ellipse().fill(boue.opacity(0.35)).frame(width: w * 0.16, height: w * 0.1).offset(x: -w * 0.28, y: -h * 0.12)
+            Ellipse().fill(boue.opacity(0.3)).frame(width: w * 0.1, height: w * 0.07).offset(x: w * 0.3, y: -h * 0.24)
+            Ellipse().fill(boue.opacity(0.32)).frame(width: w * 0.2, height: w * 0.09).offset(x: -w * 0.1, y: h * 0.3)
+            Circle().fill(boue.opacity(0.3)).frame(width: w * 0.05).offset(x: w * 0.12, y: -h * 0.34)
+        }
     }
 
     private var bodyShape: RoundedRectangle { RoundedRectangle(cornerRadius: size * 0.42, style: .continuous) }
@@ -339,5 +372,248 @@ struct Smile: Shape {
         p.move(to: CGPoint(x: r.minX, y: up ? r.maxY : r.minY))
         p.addQuadCurve(to: CGPoint(x: r.maxX, y: up ? r.maxY : r.minY), control: CGPoint(x: r.midX, y: up ? r.minY - r.height : r.maxY + r.height))
         return p
+    }
+}
+
+/// Les accessoires de la garde-robe (débloqués avec les niveaux) et le rhume.
+enum Accessoires {
+    static let rouge = Color(red: 0.93, green: 0.36, blue: 0.4)
+    static let jaune = Color(red: 1, green: 0.82, blue: 0.4)
+
+    /// Toque de chef : trois boules blanches gonflées sur un bandeau.
+    static func toque(w: CGFloat, h: CGFloat) -> some View {
+        ZStack {
+            ForEach([-1.0, 0.0, 1.0], id: \.self) { i in
+                Circle()
+                    .fill(RadialGradient(colors: [.white, Color(red: 0.9, green: 0.91, blue: 0.93)], center: UnitPoint(x: 0.4, y: 0.35), startRadius: 0, endRadius: w * 0.16))
+                    .overlay(Circle().strokeBorder(Color.black.opacity(0.07), lineWidth: 0.8))
+                    .frame(width: w * (i == 0 ? 0.3 : 0.24))
+                    .offset(x: i * w * 0.15, y: i == 0 ? -w * 0.1 : -w * 0.04)
+            }
+            RoundedRectangle(cornerRadius: w * 0.03)
+                .fill(LinearGradient(colors: [.white, Color(red: 0.88, green: 0.89, blue: 0.91)], startPoint: .top, endPoint: .bottom))
+                .overlay(RoundedRectangle(cornerRadius: w * 0.03).strokeBorder(Color.black.opacity(0.08), lineWidth: 0.8))
+                .frame(width: w * 0.5, height: w * 0.14)
+                .offset(y: w * 0.07)
+        }
+        .offset(y: -h * 0.5)
+    }
+
+    /// Bonnet tricoté vert d'eau, côtes et pompon.
+    static func bonnet(w: CGFloat, h: CGFloat) -> some View {
+        ZStack {
+            Ellipse().fill(LinearGradient(colors: [Boule.scrub, Color(red: 0.27, green: 0.6, blue: 0.57)], startPoint: .top, endPoint: .bottom))
+                .frame(width: w * 0.74, height: w * 0.46)
+                .mask(Rectangle().frame(height: w * 0.25).offset(y: -w * 0.11))
+            Capsule().fill(Color(red: 0.95, green: 0.95, blue: 0.93))
+                .overlay(HStack(spacing: w * 0.035) { ForEach(0..<9, id: \.self) { _ in Capsule().fill(Color.black.opacity(0.08)).frame(width: w * 0.012) } }.padding(.vertical, w * 0.015))
+                .frame(width: w * 0.78, height: w * 0.12)
+                .offset(y: w * 0.03)
+            Circle().fill(Color(red: 0.97, green: 0.97, blue: 0.95)).frame(width: w * 0.14).offset(y: -w * 0.27)
+        }
+        .offset(y: -h * 0.42)
+    }
+
+    /// Couronne de fleurs posée sur le front.
+    static func couronne(w: CGFloat, h: CGFloat) -> some View {
+        let couleurs = [Boule.cheek, jaune, .white, Color(red: 0.75, green: 0.62, blue: 0.95), Boule.cheek, jaune, .white]
+        return ZStack {
+            ForEach(0..<7, id: \.self) { i in
+                let x = (Double(i) - 3) * 0.12
+                Capsule().fill(Color(red: 0.42, green: 0.66, blue: 0.4)).frame(width: w * 0.1, height: w * 0.045)
+                    .rotationEffect(.degrees(i % 2 == 0 ? 30 : -30))
+                    .offset(x: w * (x + 0.05), y: -h * 0.43 + abs(x) * w * 0.3 + w * 0.02)
+            }
+            ForEach(0..<7, id: \.self) { i in
+                let x = (Double(i) - 3) * 0.12
+                ZStack {
+                    ForEach(0..<5, id: \.self) { k in
+                        Circle().fill(couleurs[i]).frame(width: w * 0.075)
+                            .offset(y: -w * 0.04).rotationEffect(.degrees(Double(k) * 72))
+                    }
+                    Circle().fill(i % 3 == 1 ? .white : jaune).frame(width: w * 0.045)
+                }
+                .offset(x: w * x, y: -h * 0.44 + abs(x) * w * 0.3)
+            }
+        }
+    }
+
+    /// Lunettes rondes (posées sur le visage, suivent le regard).
+    static func lunettes(w: CGFloat) -> some View {
+        ZStack {
+            ForEach([-1.0, 1.0], id: \.self) { s in
+                Circle().strokeBorder(Boule.ink, lineWidth: w * 0.022)
+                    .background(Circle().fill(.white.opacity(0.18)))
+                    .frame(width: w * 0.25).offset(x: s * w * 0.17, y: -w * 0.07)
+            }
+            Capsule().fill(Boule.ink).frame(width: w * 0.08, height: w * 0.02).offset(y: -w * 0.08)
+        }
+    }
+
+    /// Écharpe rouge à rayures autour du cou, un pan qui pend.
+    static func echarpe(w: CGFloat, h: CGFloat) -> some View {
+        ZStack {
+            Capsule().fill(LinearGradient(colors: [rouge, Color(red: 0.78, green: 0.26, blue: 0.32)], startPoint: .top, endPoint: .bottom))
+                .overlay(HStack(spacing: w * 0.09) { ForEach(0..<6, id: \.self) { _ in Rectangle().fill(.white.opacity(0.55)).frame(width: w * 0.03) } })
+                .clipShape(Capsule())
+                .frame(width: w * 0.9, height: w * 0.11)
+                .offset(y: h * 0.3)
+            RoundedRectangle(cornerRadius: w * 0.03).fill(rouge)
+                .overlay(VStack(spacing: w * 0.05) { ForEach(0..<3, id: \.self) { _ in Rectangle().fill(.white.opacity(0.55)).frame(height: w * 0.025) } })
+                .clipShape(RoundedRectangle(cornerRadius: w * 0.03))
+                .frame(width: w * 0.13, height: w * 0.26)
+                .rotationEffect(.degrees(-8))
+                .offset(x: -w * 0.24, y: h * 0.43)
+        }
+    }
+
+    /// Nœud papillon rose au col.
+    static func noeud(w: CGFloat, h: CGFloat) -> some View {
+        ZStack {
+            ForEach([-1.0, 1.0], id: \.self) { s in
+                Triangle().fill(Boule.cheek).frame(width: w * 0.12, height: w * 0.11)
+                    .rotationEffect(.degrees(s * 90)).offset(x: s * w * 0.06)
+            }
+            Circle().fill(Color(red: 0.9, green: 0.4, blue: 0.5)).frame(width: w * 0.055)
+        }
+        .offset(y: h * 0.34)
+    }
+
+    /// Le rhume : nez rouge et thermomètre au coin de la bouche.
+    static func rhume(w: CGFloat) -> some View {
+        ZStack {
+            Ellipse().fill(RadialGradient(colors: [Color(red: 1, green: 0.45, blue: 0.45), Color(red: 0.9, green: 0.25, blue: 0.3)], center: .topLeading, startRadius: 0, endRadius: w * 0.06))
+                .frame(width: w * 0.09, height: w * 0.07).offset(y: w * 0.02)
+            ZStack(alignment: .leading) {
+                Capsule().fill(.white).overlay(Capsule().strokeBorder(Color.black.opacity(0.2), lineWidth: 0.7)).frame(width: w * 0.24, height: w * 0.04)
+                Circle().fill(rouge).frame(width: w * 0.05)
+            }
+            .rotationEffect(.degrees(-20))
+            .offset(x: w * 0.18, y: w * 0.13)
+        }
+    }
+}
+
+/// Boubou dans sa petite baignoire, de la mousse plein la tête et un canard.
+struct BathView: View {
+    var size: CGFloat = 96
+    @State private var flotte = false
+    @State private var bulles = false
+
+    var body: some View {
+        let w = size
+        return ZStack(alignment: .bottom) {
+            // pieds de la baignoire
+            ForEach([-1.0, 1.0], id: \.self) { s in
+                Capsule().fill(Color(red: 0.85, green: 0.72, blue: 0.4)).frame(width: w * 0.06, height: w * 0.08).offset(x: s * w * 0.3)
+            }
+            Boule(mood: .happy, size: w * 0.46, shadow: false, tilt: flotte ? -4 : 4, plain: true)
+                .offset(y: -w * 0.22)
+            // la mousse
+            ForEach(0..<7, id: \.self) { i in
+                Circle().fill(.white).overlay(Circle().strokeBorder(Color(red: 0.8, green: 0.9, blue: 0.95), lineWidth: 0.8))
+                    .frame(width: w * [0.18, 0.22, 0.2, 0.24, 0.19, 0.21, 0.17][i])
+                    .frame(height: w * 0.12, alignment: .top).clipped()
+                    .offset(x: w * (Double(i) - 3) * 0.11, y: -w * (0.24 + (i % 2 == 0 ? 0.02 : 0)) + (flotte ? -w * 0.01 : w * 0.01))
+            }
+            // la baignoire
+            RoundedRectangle(cornerRadius: w * 0.12, style: .continuous)
+                .fill(LinearGradient(colors: [.white, Color(red: 0.86, green: 0.9, blue: 0.93)], startPoint: .top, endPoint: .bottom))
+                .overlay(alignment: .top) { Capsule().fill(Color(red: 0.92, green: 0.95, blue: 0.97)).frame(height: w * 0.05) }
+                .frame(width: w * 0.82, height: w * 0.24)
+                .offset(y: -w * 0.05)
+            // le canard
+            Text("🐥").font(.system(size: w * 0.14)).offset(x: w * 0.28, y: -w * (flotte ? 0.32 : 0.3))
+            // des bulles qui montent
+            ForEach(0..<4, id: \.self) { i in
+                Circle().strokeBorder(.white.opacity(bulles ? 0 : 0.85), lineWidth: 1)
+                    .frame(width: w * (0.05 + Double(i % 2) * 0.03))
+                    .offset(x: w * (-0.25 + Double(i) * 0.16), y: -w * 0.4 - (bulles ? w * 0.3 : 0))
+                    .animation(.easeOut(duration: 2).repeatForever(autoreverses: false).delay(Double(i) * 0.5), value: bulles)
+            }
+        }
+        .frame(width: w, height: w * 0.8, alignment: .bottom)
+        .onAppear {
+            withAnimation(.easeInOut(duration: 1.2).repeatForever(autoreverses: true)) { flotte = true }
+            bulles = true
+        }
+    }
+}
+
+/// Boubou en toque qui touille sa marmite fumante.
+struct PotView: View {
+    var size: CGFloat = 96
+    @State private var touille = false
+    @State private var vapeur = false
+
+    var body: some View {
+        let w = size
+        return ZStack(alignment: .bottom) {
+            Boule(mood: .happy, arms: .hug, size: w * 0.56, shadow: false, tilt: touille ? -5 : 5, accessoire: "toque")
+                .offset(x: -w * 0.12, y: -w * 0.12)
+            // la cuillère en bois
+            Capsule().fill(Color(red: 0.75, green: 0.56, blue: 0.36)).frame(width: w * 0.035, height: w * 0.3)
+                .rotationEffect(.degrees(touille ? 18 : -10), anchor: .bottom)
+                .offset(x: w * 0.12, y: -w * 0.18)
+            // la marmite
+            ZStack {
+                Ellipse().fill(Color(red: 0.95, green: 0.6, blue: 0.3)).frame(width: w * 0.5, height: w * 0.08).offset(y: -w * 0.13)
+                RoundedRectangle(cornerRadius: w * 0.08, style: .continuous)
+                    .fill(LinearGradient(colors: [Color(red: 0.32, green: 0.34, blue: 0.4), Color(red: 0.18, green: 0.19, blue: 0.23)], startPoint: .top, endPoint: .bottom))
+                    .frame(width: w * 0.56, height: w * 0.26)
+                ForEach([-1.0, 1.0], id: \.self) { s in
+                    Capsule().fill(Color(red: 0.2, green: 0.21, blue: 0.25)).frame(width: w * 0.1, height: w * 0.04).offset(x: s * w * 0.31, y: -w * 0.06)
+                }
+            }
+            .offset(x: w * 0.12)
+            // la vapeur
+            ForEach(0..<3, id: \.self) { i in
+                Capsule().fill(.white.opacity(vapeur ? 0 : 0.7)).frame(width: w * 0.035, height: w * 0.12)
+                    .offset(x: w * (0.02 + Double(i) * 0.1), y: -w * 0.36 - (vapeur ? w * 0.18 : 0))
+                    .animation(.easeOut(duration: 1.6).repeatForever(autoreverses: false).delay(Double(i) * 0.45), value: vapeur)
+            }
+        }
+        .frame(width: w, height: w * 0.85, alignment: .bottom)
+        .onAppear {
+            withAnimation(.easeInOut(duration: 0.45).repeatForever(autoreverses: true)) { touille = true }
+            vapeur = true
+        }
+    }
+}
+
+/// Une carotte sauvage qui dépasse de la terre (on clique pour l'arracher).
+struct CarrotSprout: View {
+    var size: CGFloat = 40
+    var arrachee = false
+    var doree = false
+    @State private var balance = false
+
+    var body: some View {
+        let w = size
+        return ZStack(alignment: .bottom) {
+            // la carotte (visible quand on l'arrache)
+            ZStack(alignment: .top) {
+                Triangle().fill(LinearGradient(colors: doree ? [Color(red: 1, green: 0.88, blue: 0.4), Color(red: 0.95, green: 0.7, blue: 0.2)] : [Color(red: 1, green: 0.6, blue: 0.25), Color(red: 0.93, green: 0.45, blue: 0.15)], startPoint: .top, endPoint: .bottom))
+                    .rotationEffect(.degrees(180)).frame(width: w * 0.32, height: w * 0.6)
+                    .offset(y: w * 0.12)
+                    .opacity(arrachee ? 1 : 0)
+                ForEach([-1.0, 0.0, 1.0], id: \.self) { s in
+                    Capsule().fill(Color(red: 0.35, green: 0.68, blue: 0.35)).frame(width: w * 0.08, height: w * 0.26)
+                        .rotationEffect(.degrees(s * 25 + (balance ? 6 : -6)), anchor: .bottom)
+                        .offset(x: s * w * 0.04, y: -w * 0.12)
+                }
+            }
+            .offset(y: arrachee ? -w * 0.55 : w * 0.02)
+            // la petite butte de terre
+            Ellipse().fill(Color(red: 0.45, green: 0.33, blue: 0.24)).frame(width: w * 0.7, height: w * 0.2)
+                .opacity(arrachee ? 0.5 : 1)
+            if doree && !arrachee {
+                Image(systemName: "sparkle").font(.system(size: w * 0.18, weight: .bold)).foregroundStyle(Color(red: 1, green: 0.85, blue: 0.4))
+                    .offset(x: w * 0.25, y: -w * 0.4).opacity(balance ? 1 : 0.3)
+            }
+        }
+        .frame(width: w, height: w, alignment: .bottom)
+        .animation(.spring(response: 0.35, dampingFraction: 0.55), value: arrachee)
+        .onAppear { withAnimation(.easeInOut(duration: 1.1).repeatForever(autoreverses: true)) { balance = true } }
     }
 }

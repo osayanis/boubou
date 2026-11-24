@@ -3,7 +3,8 @@ import Foundation
 /// Le fil entre Boubou (chez Jeanne) et l'OsaNotch de Yanis, par le relais « Amis » du serveur
 /// OsaDrop (socket.io) : Boubou écoute sur son propre code à 6 chiffres et écrit au code de Yanis
 /// (champ « lien » de messages.json). Messages :
-///   → OsaNotch : mochi_hello {code, name} (appairage automatique), mochi_pense {code, name}
+///   → OsaNotch : mochi_hello {code, name, foyer} (appairage automatique + secret du foyer), mochi_pense {code, name}
+///   ↔ boubou_maj {code, name, quoi} : « l'état du foyer a changé, relis-le » (voir boubou-site/docs/foyer.md)
 ///   ← OsaNotch : notch_love {name}, notch_hello {name}
 /// Un message qui n'a pas pu partir (Mac de Yanis éteint) repart quand son OsaNotch se reconnecte.
 @MainActor
@@ -23,6 +24,8 @@ final class Link: NSObject, URLSessionWebSocketDelegate {
         set { UserDefaults.standard.set(newValue, forKey: "BoubouPenseEnAttente") }
     }
     private var lastLove = Date.distantPast
+    /// Pour `Boubou essai-foyer` : ne jamais parler au vrai OsaNotch de Yanis.
+    static var desactive = false
     var onLove: (String) -> Void = { _ in }
 
     override init() {
@@ -33,6 +36,7 @@ final class Link: NSObject, URLSessionWebSocketDelegate {
     }
 
     func start() {
+        guard !Self.desactive else { return }
         connect()
         // Un message en attente (Mac de Yanis éteint) : on réessaie toutes les 2 minutes.
         Timer.scheduledTimer(withTimeInterval: 120, repeats: true) { _ in
@@ -72,13 +76,27 @@ final class Link: NSObject, URLSessionWebSocketDelegate {
             onLove(String((d["name"] as? String ?? partner?.name ?? "Yanis").prefix(30)))
         case "notch_hello":
             hello(); flush()
+        case "boubou_maj":
+            Task { await Foyer.shared.rafraichir() }
         default: break
         }
     }
 
     private func hello() {
         guard let p = partner else { return }
-        send(to: p.code, ["type": "mochi_hello", "name": name, "code": myCode]) { _ in }
+        var m = ["type": "mochi_hello", "name": name, "code": myCode]
+        // le secret du foyer, seulement une fois que le serveur l'a accepté
+        if Foyer.shared.inscrit { m["foyer"] = Foyer.shared.secret }
+        send(to: p.code, m) { _ in }
+    }
+
+    /// Le foyer vient d'être inscrit : on redonne le secret à OsaNotch.
+    func helloFoyer() { if connected { hello() } }
+
+    /// Un geste de Jeanne : l'OsaNotch de Yanis relit l'état tout de suite (sinon il le verra au prochain passage).
+    func nudge(_ quoi: String) {
+        guard let p = partner else { return }
+        send(to: p.code, ["type": "boubou_maj", "name": name, "code": myCode, "quoi": quoi]) { _ in }
     }
 
     // MARK: socket.io minimal (Engine.IO v4), comme FriendBridge d'OsaNotch
@@ -137,6 +155,7 @@ final class Link: NSObject, URLSessionWebSocketDelegate {
     }
 
     private func send(to code: String, _ msg: [String: String], done: @escaping (Bool) -> Void) {
+        if Self.desactive { return done(false) }
         guard connected else {
             if task == nil { connect() }
             return done(false)

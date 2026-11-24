@@ -2,7 +2,7 @@ import AppKit
 
 /// `BOUBOU_DEMO=<scène>` déclenche une scène tout de suite (pour essayer et faire des captures) :
 /// accueil matin question bien bof mal respire etire bulles focus dodo reveil caresse secoue yanis
-/// anniversaire eau panneau
+/// anniversaire eau panneau · foyer : bain cuisine carotte niveau foyer mot
 enum Demo {
     @MainActor static func run(_ app: AppDelegate) {
         guard let scene = ProcessInfo.processInfo.environment["BOUBOU_DEMO"] else { return }
@@ -27,6 +27,12 @@ enum Demo {
             case "eau": coach.drink()
             case "panneau": app.quick.open()
             case "idle": coach.idle()
+            case "bain": coach.scene = "bain"; DispatchQueue.main.asyncAfter(deadline: .now() + 5) { coach.scene = nil }
+            case "cuisine": coach.scene = "cuisine"; DispatchQueue.main.asyncAfter(deadline: .now() + 4) { coach.scene = nil }
+            case "carotte": CarrotController.shared.show()
+            case "niveau": coach.niveau("Externe", cadeau: "Écharpe")
+            case "foyer": UserDefaults.standard.set("boubou", forKey: "BoubouOnglet"); app.quick.open()
+            case "mot": UserDefaults.standard.set("boubou", forKey: "BoubouOnglet"); Foyer.shared.ecrire = true; app.quick.open()
             default: break
             }
         }
