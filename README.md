@@ -52,6 +52,10 @@ Yanis depuis l'onglet 🥕 de son OsaNotch (≥ 1.0.14).
   accessoire (toque, écharpe, bonnet, lunettes, nœud papillon, couronne de fleurs) dans la garde-robe.
 - **Soins animés** : bain (baignoire + canard), marmite qui mijote, câlins (caresser Boubou compte aussi),
   jouer = les bulles, dodo (double-clic) synchronisé avec le foyer.
+- **Scènes en 3D (0.5)** : bain, repas, cuisine, passage de niveau, et tout ce que fait Yanis (courses au
+  marché avec le chariot, potager…) se jouent sur une petite île qui flotte à côté de Boubou (`Scenes.swift`,
+  recopié dans OsaNotch). Le potager du panneau est dessiné (bacs en bois, plantes qui poussent vraiment), et les
+  cartes penchent vers la souris. Aperçu : `.build/release/Boubou apercu-scenes /tmp/scenes [bain,courses…]`.
 - **Journal à deux** : chaque geste s'écrit ; quand Yanis s'est occupé de Boubou, Boubou le raconte
   (« Yanis m'a fait des crêpes ! »).
 - **💌 Un mot pour Yanis** : Jeanne écrit, Yanis le reçoit en bannière dans son notch. À sens unique :

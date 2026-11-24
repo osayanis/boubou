@@ -1,4 +1,5 @@
 import AppKit
+import SwiftUI
 
 let args = CommandLine.arguments
 if args.count > 2, args[1] == "icon" {
@@ -11,6 +12,21 @@ if args.count > 2, args[1] == "lit" {
 if args.count > 2, args[1] == "portraits" {
     do { try MainActor.assumeIsolated { try IconArt.portraits(to: URL(fileURLWithPath: args[2])) }; exit(0) }
     catch { FileHandle.standardError.write(Data("\(error)\n".utf8)); exit(1) }
+}
+if args.count > 2, args[1] == "apercu-scenes" {
+    MainActor.assumeIsolated {
+        let dir = URL(fileURLWithPath: args[2])
+        try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        let quoi = args.count > 3 ? args[3].split(separator: ",").compactMap { SceneKind(rawValue: String($0)) } : SceneKind.allCases
+        for k in quoi {
+            let r = ImageRenderer(content: ScenesApercu.pellicule(k, emojis: k == .cuisine ? ["🥕", "🥔", "🥕"] : [], resultat: k == .cuisine ? "🥣" : (k == .niveau ? "Externe" : nil), images: 8))
+            r.scale = 1.5
+            if let img = r.nsImage, let t = img.tiffRepresentation, let b = NSBitmapImageRep(data: t) {
+                try? b.representation(using: .png, properties: [:])?.write(to: dir.appendingPathComponent("\(k.rawValue).png"))
+            }
+        }
+    }
+    exit(0)
 }
 if args.count > 1, args[1] == "essai-foyer" {
     Task { @MainActor in exit(await FoyerEssai.run() ? 0 : 1) }

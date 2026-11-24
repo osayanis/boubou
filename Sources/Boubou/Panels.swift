@@ -32,12 +32,9 @@ private struct MascotView: View {
             if coach.sleeping {
                 BedView(size: 96)
                     .transition(.scale(scale: 0.6, anchor: .bottom).combined(with: .opacity))
-            } else if coach.scene == "bain" {
-                BathView(size: 96)
-                    .transition(.scale(scale: 0.6, anchor: .bottom).combined(with: .opacity))
-            } else if coach.scene == "cuisine" {
-                PotView(size: 92)
-                    .transition(.scale(scale: 0.6, anchor: .bottom).combined(with: .opacity))
+            } else if coach.scene != nil {
+                // il est parti jouer la scène juste à côté
+                Color.clear
             } else {
                 let e = foyer.etat
                 // l'humeur du foyer quand rien d'autre ne se passe (faim, rhume, fatigue…)
@@ -72,6 +69,7 @@ private struct MascotView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
         .animation(.spring(response: 0.45, dampingFraction: 0.75), value: coach.sleeping)
+        .animation(.spring(response: 0.45, dampingFraction: 0.75), value: coach.scene)
         .animation(.spring(response: 0.45, dampingFraction: 0.75), value: foyer.etat?.besoin)
     }
 }

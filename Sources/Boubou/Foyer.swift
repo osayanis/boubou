@@ -266,6 +266,18 @@ final class Foyer: ObservableObject {
         let coach = Coach.shared
         if !histoires.isEmpty {
             let h = histoires; histoires = []
+            if let ev = h.first, let spec = scene(de: ev) {
+                // ce que Yanis a fait se joue sur le bureau, puis Boubou le raconte
+                StageController.shared.jouer(spec)
+                let reste = h.count > 1 ? h : []
+                Task {
+                    try? await Task.sleep(for: .seconds(spec.kind.duree + 0.3))
+                    if reste.isEmpty { coach.say(self.phrase(ev), mood: .love, arms: .hug, autoHide: 12) }
+                    else { coach.say("Pendant que tu travaillais, Yanis est passé me voir 💛", lines: reste.prefix(4).map { "\($0.emoji) \($0.texte)" }, mood: .love, arms: .hug, autoHide: 16) }
+                    FX.shared.burst(.hearts)
+                }
+                return true
+            }
             if h.count == 1, let ev = h.first {
                 coach.say(phrase(ev), mood: .love, arms: .hug, autoHide: 12)
             } else {
@@ -294,6 +306,24 @@ final class Foyer: ObservableObject {
             return true
         }
         return false
+    }
+
+    private func scene(de ev: FoyerEtat.Evenement) -> SceneSpec? {
+        let j = jeu, acc = etat?.accessoire
+        switch ev.type {
+        case "courses": return SceneSpec(kind: .courses, accessoire: acc)
+        case "bain": return SceneSpec(kind: .bain, accessoire: acc)
+        case "nourrir": return SceneSpec(kind: .repas, emojis: [ev.detail.map { j?.emoji($0) ?? "🥞" } ?? "🥞"], accessoire: acc)
+        case "cuisiner":
+            let p = ev.detail.flatMap { j?.plat($0) }
+            let ings = (p?.ingredients ?? [:]).flatMap { k, n in Array(repeating: j?.emoji(k) ?? "🥕", count: n) }
+            return SceneSpec(kind: .cuisine, emojis: ings, resultat: ev.detail == "mystere" ? "🫕" : p?.emoji)
+        case "planter": return SceneSpec(kind: .planter, emojis: [ev.detail.map { j?.emoji($0) ?? "🥕" } ?? "🥕"], accessoire: acc)
+        case "arroser": return SceneSpec(kind: .arroser, emojis: ["🥕"], accessoire: acc)
+        case "recolter": return SceneSpec(kind: .recolter, emojis: [ev.detail.map { j?.emoji($0) ?? "🥕" } ?? "🥕"], accessoire: acc)
+        case "niveau": return SceneSpec(kind: .niveau, resultat: ev.detail, accessoire: acc)
+        default: return nil
+        }
     }
 
     private func phrase(_ ev: FoyerEtat.Evenement) -> String {
@@ -334,8 +364,19 @@ extension Coach {
 
     func niveau(_ nom: String, cadeau: String?) {
         onClosePanel()
-        FX.shared.burst(.confetti)
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) { FX.shared.burst(.sparkles) }
+        let spec = SceneSpec(kind: .niveau, resultat: nom, accessoire: Foyer.shared.etat?.accessoire)
+        // après la scène en cours (le repas, la cuisine…), pas par-dessus
+        let attente = max(0, (scene != nil ? 4.5 : 0))
+        Task { [weak self] in
+            try? await Task.sleep(for: .seconds(attente))
+            StageController.shared.jouer(spec)
+            try? await Task.sleep(for: .seconds(spec.kind.duree))
+            self?.finNiveau(nom, cadeau: cadeau)
+        }
+    }
+
+    private func finNiveau(_ nom: String, cadeau: String?) {
+        FX.shared.burst(.sparkles)
         say("Je passe \(nom) ! 🎓", footnote: cadeau.map { "Nouveau dans la garde-robe : \($0.lowercased())" },
             mood: .excited, arms: .up, autoHide: 12)
         setMood(.excited, arms: .up, for: 4)
@@ -348,21 +389,17 @@ extension Coach {
         guard let r = await Foyer.shared.geste("nourrir", p), r.ok else { return }
         let j = Foyer.shared.jeu
         let nom = plat.flatMap { j?.plat($0)?.nom } ?? ingredient.flatMap { j?.ingredients[$0]?.nom } ?? ""
-        hop += 1
-        FX.shared.burst(.sparkles)
-        if r.resultat?.gueri == true {
-            Foyer.shared.dire("Atchoum… guéri ! Merci 💛")
-            setMood(.excited, arms: .up, for: 3)
-        } else if let d = r.resultat?.mystere, d < 0 {
-            Foyer.shared.dire("Hmm… c'est… spécial 😵‍💫")
-            setMood(.dizzy, arms: .up, for: 2.5)
-        } else if ingredient == "citron" {
-            Foyer.shared.dire("Pouah, c'est acide 🍋")
-            setMood(.dizzy, arms: .up, for: 2)
-        } else {
-            Foyer.shared.dire(["Miam ! \(nom) 😋", "Trop bon, \(nom.lowercased()) !", "\(nom), mon préféré 😋"].randomElement()!)
-            setMood(.happy, arms: .up, for: 2.5)
-        }
+        // le repas se joue sur le bureau : Boubou mange pour de vrai
+        onClosePanel()
+        let spec = SceneSpec(kind: .repas, emojis: [j?.emoji(plat ?? ingredient ?? "") ?? "🥕"], accessoire: Foyer.shared.etat?.accessoire)
+        StageController.shared.jouer(spec)
+        try? await Task.sleep(for: .seconds(spec.kind.duree + 0.2))
+        let texte: String, humeur: Boule.Mood
+        if r.resultat?.gueri == true { texte = "Atchoum… guéri ! Merci 💛"; humeur = .excited }
+        else if let d = r.resultat?.mystere, d < 0 { texte = "Hmm… c'est… spécial 😵‍💫"; humeur = .dizzy }
+        else if ingredient == "citron" { texte = "Pouah, c'est acide 🍋"; humeur = .dizzy }
+        else { texte = ["Miam ! \(nom) 😋", "Trop bon, \(nom.lowercased()) !", "\(nom), mon préféré 😋"].randomElement()!; humeur = .happy }
+        say(texte, mood: humeur, arms: .up, autoHide: 5)
     }
 
     func calinFoyer() async {
@@ -375,11 +412,9 @@ extension Coach {
     func bain() async {
         guard let r = await Foyer.shared.geste("bain"), r.ok else { return }
         onClosePanel()
-        withAnimation(.spring(response: 0.45, dampingFraction: 0.75)) { scene = "bain" }
-        FX.shared.burst(.drops)
-        try? await Task.sleep(for: .seconds(4.5))
-        withAnimation(.spring(response: 0.45, dampingFraction: 0.75)) { scene = nil }
-        FX.shared.burst(.sparkles)
+        let spec = SceneSpec(kind: .bain, accessoire: Foyer.shared.etat?.accessoire)
+        StageController.shared.jouer(spec)
+        try? await Task.sleep(for: .seconds(spec.kind.duree + 0.3))
         say(["Tout propre ! Je sens la lavande ✨", "Plouf ! Merci 🛁", "J'ai trouvé un canard dans le bain 🦆"].randomElement()!,
             mood: .happy, arms: .up, autoHide: 5)
     }
@@ -387,11 +422,12 @@ extension Coach {
     func cuisiner(_ ingredients: [String]) async {
         guard let r = await Foyer.shared.geste("cuisiner", ["ingredients": ingredients]), r.ok else { return }
         onClosePanel()
-        withAnimation(.spring(response: 0.45, dampingFraction: 0.75)) { scene = "cuisine" }
-        try? await Task.sleep(for: .seconds(3.5))
-        withAnimation(.spring(response: 0.45, dampingFraction: 0.75)) { scene = nil }
         let id = r.resultat?.plat ?? "mystere"
         let plat = Foyer.shared.jeu?.plat(id)
+        let j = Foyer.shared.jeu
+        let spec = SceneSpec(kind: .cuisine, emojis: ingredients.map { j?.emoji($0) ?? "🥕" }, resultat: id == "mystere" ? "🫕" : plat?.emoji)
+        StageController.shared.jouer(spec)
+        try? await Task.sleep(for: .seconds(spec.kind.duree + 0.3))
         if id == "mystere" {
             say("Euh… j'ai inventé un plat mystère 🫕 Il est au frigo, à tes risques !", mood: .dizzy, arms: .up, autoHide: 8)
         } else if r.resultat?.nouvelle == true {
@@ -465,6 +501,8 @@ struct FoyerView: View {
     @ObservedObject var coach = Coach.shared
     @AppStorage("BoubouSection") private var section = "potager"
     @State private var marmite: [String] = []
+    /// L'animation en cours sur une case du potager : (geste, plante, début).
+    @State private var effets: [Int: (String, String, Date)] = [:]
     @State private var carnet = false
     @AppStorage("BoubouMotBrouillon") private var mot = ""
     @State private var envoi = false
@@ -598,7 +636,8 @@ struct FoyerView: View {
                     Text(e.niveau.nom).font(.system(size: 14, weight: .heavy)).foregroundStyle(.white)
                     if e.malade { Text("enrhumé").font(.system(size: 10, weight: .bold)).foregroundStyle(Theme.soft) }
                     Spacer()
-                    Text("⭐ \(e.etoiles)").font(.system(size: 12, weight: .heavy)).foregroundStyle(.white.opacity(0.85))
+                    Text("⭐ \(e.etoiles)").font(.system(size: 12, weight: .heavy).monospacedDigit()).foregroundStyle(.white.opacity(0.85))
+                        .contentTransition(.numericText(value: Double(e.etoiles))).animation(.snappy, value: e.etoiles)
                         .help("Gagne des étoiles en cochant ta liste")
                 }
                 if let s = e.niveau.suivant {
@@ -613,6 +652,7 @@ struct FoyerView: View {
         }
         .padding(10)
         .background(Theme.card, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .modifier(Relief(force: 6))
     }
 
     private func jauge(_ icone: String, _ v: Int, _ nom: String) -> some View {
@@ -677,6 +717,7 @@ struct FoyerView: View {
         .frame(maxWidth: .infinity).padding(.vertical, 8)
         .background(.white.opacity(0.06), in: RoundedRectangle(cornerRadius: 11, style: .continuous))
         .contentShape(Rectangle())
+        .modifier(Relief(force: 16))
     }
 
     private func chip(_ icon: String, _ label: String, _ run: @escaping () -> Void) -> some View {
@@ -725,52 +766,90 @@ struct FoyerView: View {
         }
     }
 
+    /// Un vrai petit bac de potager : la plante pousse pour de bon, l'eau tombe, le légume saute.
     @ViewBuilder
     private func caseView(_ i: Int, _ c: FoyerEtat.Case?, _ j: FoyerJeu) -> some View {
-        let fond = RoundedRectangle(cornerRadius: 12, style: .continuous)
         if let c {
             let total = max(1, c.fin - c.plantee), fait = min(1, max(0, (foyer.maintenant - c.plantee) / total))
             let pret = c.prete || fait >= 1
             Button {
-                if pret { Task { await coach.recolter(i) } }
-                else if !c.arrosee { Task { await coach.arroser(i) } }
+                if pret { effet(i, "recolter", c.plante); Task { await coach.recolter(i) } }
+                else if !c.arrosee { effet(i, "arroser", c.plante); Task { await coach.arroser(i) } }
             } label: {
                 VStack(spacing: 3) {
-                    Text(j.emoji(c.plante)).font(.system(size: pret ? 24 : 14 + 8 * fait))
-                        .opacity(pret ? 1 : 0.55 + 0.45 * fait)
+                    bac(i, plante: c.plante, pousse: pret ? 1 : max(0.14, fait), mouille: c.arrosee && !pret, pret: pret)
                     if pret {
-                        Text("Récolter").font(.system(size: 10, weight: .heavy)).foregroundStyle(.black.opacity(0.8))
+                        Text("Récolter").font(.system(size: 9.5, weight: .heavy)).foregroundStyle(.black.opacity(0.8))
                             .padding(.horizontal, 7).padding(.vertical, 2).background(Theme.done, in: Capsule())
                     } else {
-                        barre(fait, couleur: Theme.done).frame(width: 60)
                         Text(c.arrosee ? "💧 \(duree((c.fin - foyer.maintenant) / 60000))" : "Arroser 💧")
-                            .font(.system(size: 9.5, weight: .bold)).foregroundStyle(.white.opacity(c.arrosee ? 0.45 : 0.8))
+                            .font(.system(size: 9.5, weight: .bold)).foregroundStyle(.white.opacity(c.arrosee ? 0.45 : 0.85))
                     }
                 }
-                .frame(maxWidth: .infinity, minHeight: 66)
-                .background(Color(red: 0.36, green: 0.27, blue: 0.2).opacity(pret ? 0.55 : 0.35), in: fond)
-                .overlay(fond.strokeBorder(pret ? Theme.done.opacity(0.7) : .clear, lineWidth: 1.5))
-                .contentShape(fond)
+                .frame(maxWidth: .infinity).padding(.vertical, 4)
+                .contentShape(Rectangle())
             }
             .buttonStyle(PressStyle())
+            .modifier(Relief(force: 14))
             .help(pret ? "Récolter" : c.arrosee ? "Arrosé : ça pousse plus vite" : "Arroser : ça pousse 35 % plus vite")
         } else {
             Menu {
                 ForEach(j.trie(j.plantes.keys), id: \.self) { p in
-                    Button("\(j.emoji(p))  \(j.ingredients[p]?.nom ?? p) · \(duree((j.plantes[p]?.heures ?? 1) * 60))") { Task { await coach.planter(i, p) } }
+                    Button("\(j.emoji(p))  \(j.ingredients[p]?.nom ?? p) · \(duree((j.plantes[p]?.heures ?? 1) * 60))") {
+                        effet(i, "planter", p); Task { await coach.planter(i, p) }
+                    }
                 }
             } label: {
-                VStack(spacing: 2) {
-                    Image(systemName: "plus").font(.system(size: 14, weight: .bold))
-                    Text("Planter").font(.system(size: 9.5, weight: .bold))
+                VStack(spacing: 3) {
+                    bac(i, plante: nil, pousse: 0, mouille: false, pret: false)
+                        .overlay { Image(systemName: "plus").font(.system(size: 13, weight: .heavy)).foregroundStyle(.white.opacity(0.55)).offset(y: -2) }
+                    Text("Planter").font(.system(size: 9.5, weight: .bold)).foregroundStyle(.white.opacity(0.4))
                 }
-                .foregroundStyle(.white.opacity(0.4))
-                .frame(maxWidth: .infinity, minHeight: 66)
-                .background(Color(red: 0.36, green: 0.27, blue: 0.2).opacity(0.2), in: fond)
-                .overlay(fond.strokeBorder(.white.opacity(0.1), style: StrokeStyle(lineWidth: 1, dash: [4, 3])))
-                .contentShape(fond)
+                .frame(maxWidth: .infinity).padding(.vertical, 4)
+                .contentShape(Rectangle())
             }
             .menuStyle(.button).buttonStyle(.plain).menuIndicator(.hidden)
+            .modifier(Relief(force: 14))
+        }
+    }
+
+    private func effet(_ i: Int, _ quoi: String, _ plante: String) { effets[i] = (quoi, plante, Date()) }
+
+    private func bac(_ i: Int, plante: String?, pousse: Double, mouille: Bool, pret: Bool) -> some View {
+        let e = effets[i], j = foyer.jeu
+        return TimelineView(.animation(minimumInterval: 1 / 30, paused: e == nil && !pret && plante == nil)) { tl in
+            let t = tl.date.timeIntervalSinceReferenceDate
+            let age = e.map { tl.date.timeIntervalSince($0.2) } ?? 99
+            ZStack {
+                Bac(w: 74, mouille: mouille || (e?.0 == "arroser" && age < 3) ? 0.75 : 0)
+                if let p = plante ?? (e?.0 == "planter" && age < 2 ? e?.1 : nil) {
+                    let saute = e?.0 == "recolter" ? M.seg(age, 0, 0.9) : 0
+                    let germe = e?.0 == "planter" ? 0.14 + 0.15 * M.spring(M.seg(age, 0.2, 1.2)) : pousse
+                    if saute == 0 || saute >= 1 {
+                        PlanteDessin(emoji: j?.emoji(p) ?? "🌱", pousse: saute >= 1 ? 0.14 : germe, t: t, size: 42)
+                            .offset(y: -19)
+                    }
+                    if saute > 0 && saute < 1 {
+                        Text(j?.emoji(p) ?? "🥕").font(.system(size: 22))
+                            .rotationEffect(.degrees(saute * 540))
+                            .offset(y: -10 - CGFloat(sin(saute * .pi)) * 46).scaleEffect(1 + 0.3 * saute).opacity(1 - saute * saute)
+                    }
+                }
+                if e?.0 == "arroser" && age < 1.6 {
+                    ForEach(0..<10, id: \.self) { k in
+                        let x = ((age * 2 + Double(k) / 10).truncatingRemainder(dividingBy: 1))
+                        Ellipse().fill(Color(red: 0.55, green: 0.8, blue: 0.98)).frame(width: 2.5, height: 4.5)
+                            .offset(x: CGFloat(M.r(k, 1) - 0.5) * 40, y: -40 + CGFloat(x) * 34).opacity(1 - x * 0.5)
+                    }
+                }
+                if pret {
+                    Image(systemName: "sparkle").font(.system(size: 9, weight: .bold)).foregroundStyle(Color(red: 1, green: 0.88, blue: 0.45))
+                        .offset(x: 22, y: -30 + CGFloat(sin(t * 3)) * 3).opacity(0.5 + 0.5 * sin(t * 4))
+                }
+                Etincelles(t: age, t0: e?.0 == "recolter" ? 0.5 : 0.9, centre: CGPoint(x: 40, y: 10), rayon: 26)
+                    .frame(width: 80, height: 40).allowsHitTesting(false)
+            }
+            .frame(width: 84, height: 58)
         }
     }
 
@@ -936,6 +1015,7 @@ struct FoyerView: View {
             .overlay(RoundedRectangle(cornerRadius: 10, style: .continuous).strokeBorder(porte ? Theme.done : .clear, lineWidth: 1.5))
         }
         .buttonStyle(PressStyle()).disabled(!ouvert)
+        .modifier(Relief(force: 16))
         .help(ouvert ? nom : "Débloqué quand Boubou passe \(niveau)")
     }
 
@@ -1129,5 +1209,72 @@ enum FoyerEssai {
         _ = await essai("dodo"); _ = await essai("nourrir", ["ingredient": "carotte"], attendu: false); _ = await essai("reveil")
         print("journal[0] = \(f.etat?.journal.first?.texte ?? "-") ; mots = \(f.etat?.mots.count ?? 0)")
         return ok
+    }
+}
+
+// MARK: - Relief : la carte penche vers la souris, comme une vraie carte en 3D
+
+struct Relief: ViewModifier {
+    var force: Double = 8
+    @State private var pos: CGPoint?
+    @State private var taille: CGSize = .zero
+
+    func body(content: Content) -> some View {
+        let dx = pos.map { Double($0.x / max(1, taille.width)) - 0.5 } ?? 0
+        let dy = pos.map { Double($0.y / max(1, taille.height)) - 0.5 } ?? 0
+        content
+            .rotation3DEffect(.degrees(-dy * force), axis: (x: 1, y: 0, z: 0), perspective: 0.5)
+            .rotation3DEffect(.degrees(dx * force), axis: (x: 0, y: 1, z: 0), perspective: 0.5)
+            .scaleEffect(pos == nil ? 1 : 1.025)
+            .shadow(color: .black.opacity(pos == nil ? 0 : 0.35), radius: pos == nil ? 0 : 8, x: -dx * 6, y: 4 - dy * 4)
+            .background(GeometryReader { g in Color.clear.onAppear { taille = g.size }.onChange(of: g.size) { _, n in taille = n } })
+            .onContinuousHover { phase in
+                switch phase {
+                case .active(let p): pos = p
+                case .ended: pos = nil
+                }
+            }
+            .animation(.spring(response: 0.35, dampingFraction: 0.7), value: pos)
+    }
+}
+
+// MARK: - La scène qui flotte à côté de Boubou sur le bureau
+
+@MainActor
+final class StageController {
+    static let shared = StageController()
+    weak var mascot: MascotController?
+    private var panel: FloatingPanel?
+    private var fin: Task<Void, Never>?
+    static let largeur: CGFloat = 290
+
+    /// Joue une scène ; Boubou quitte son coin le temps de la scène et y revient après.
+    func jouer(_ spec: SceneSpec) {
+        guard let m = mascot else { return }
+        let w = Self.largeur, size = NSSize(width: w, height: w * SceneFrame.ratio)
+        let p = panel ?? FloatingPanel(size: size)
+        panel = p
+        p.ignoresMouseEvents = true
+        let host = NSHostingView(rootView: SceneAnimee(spec: spec, width: w))
+        host.frame = NSRect(origin: .zero, size: size)
+        p.contentView = host
+        let f = m.panel.frame, c = Store.shared.settings.corner
+        var o = NSPoint(x: c.right ? f.maxX - size.width : f.minX, y: c.bottom ? f.minY : f.maxY - size.height)
+        if let v = (m.panel.screen ?? NSScreen.main)?.visibleFrame {
+            o.x = min(max(o.x, v.minX), v.maxX - size.width)
+            o.y = min(max(o.y, v.minY), v.maxY - size.height)
+        }
+        p.setFrame(NSRect(origin: o, size: size), display: true)
+        p.alphaValue = 1
+        p.orderFrontRegardless()
+        withAnimation(.easeOut(duration: 0.2)) { Coach.shared.scene = spec.kind.rawValue }
+        fin?.cancel()
+        fin = Task { [weak self] in
+            try? await Task.sleep(for: .seconds(spec.kind.duree))
+            guard !Task.isCancelled else { return }
+            self?.panel?.orderOut(nil)
+            withAnimation(.spring(response: 0.45, dampingFraction: 0.7)) { Coach.shared.scene = nil }
+            Coach.shared.hop += 1
+        }
     }
 }

@@ -41,6 +41,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         Link.shared.onLove = { name in Coach.shared.yanisLove(name) }
         Link.shared.start()
         CarrotController.shared.mascot = mascot
+        StageController.shared.mascot = mascot
         Foyer.shared.start()
         coach.start()
         Updater.shared.start()
