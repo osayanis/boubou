@@ -501,8 +501,6 @@ struct FoyerView: View {
     @ObservedObject var coach = Coach.shared
     @AppStorage("BoubouSection") private var section = "potager"
     @State private var marmite: [String] = []
-    /// L'animation en cours sur une case du potager : (geste, plante, début).
-    @State private var effets: [Int: (String, String, Date)] = [:]
     @State private var carnet = false
     @AppStorage("BoubouMotBrouillon") private var mot = ""
     @State private var envoi = false
@@ -753,103 +751,27 @@ struct FoyerView: View {
     // MARK: Potager
 
     private func potager(_ e: FoyerEtat, _ j: FoyerJeu) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: 6) {
             TimelineView(.periodic(from: .now, by: 30)) { _ in
-                LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 6), count: 3), spacing: 6) {
-                    ForEach(0..<e.potager.count, id: \.self) { i in caseView(i, e.potager[i], j) }
-                }
+                let now = foyer.maintenant
+                JardinInteractif(
+                    cases: e.potager.map { c in
+                        c.map { c in
+                            let fait = min(1, max(0, (now - c.plantee) / max(1, c.fin - c.plantee)))
+                            return CaseJardin(emoji: j.emoji(c.plante), pousse: fait, arrosee: c.arrosee, prete: c.prete || fait >= 1,
+                                              reste: duree((c.fin - now) / 60000))
+                        }
+                    },
+                    graines: j.trie(j.plantes.keys).map { Graine(id: $0, emoji: j.emoji($0), duree: duree((j.plantes[$0]?.heures ?? 1) * 60)) },
+                    width: 312, height: 196,
+                    planter: { i, p in Task { await coach.planter(i, p) } },
+                    arroser: { i in Task { await coach.arroser(i) } },
+                    recolter: { i in Task { await coach.recolter(i) } })
             }
             let reste = (e.prochainRamassage - foyer.maintenant) / 60000
             Text(reste <= 0 ? "🥕 Une carotte sauvage peut pousser à côté de moi, garde l'œil ouvert !"
                             : "🥕 Prochaine carotte sauvage dans \(duree(reste))")
                 .font(.system(size: 11, weight: .medium)).foregroundStyle(.white.opacity(0.45))
-        }
-    }
-
-    /// Un vrai petit bac de potager : la plante pousse pour de bon, l'eau tombe, le légume saute.
-    @ViewBuilder
-    private func caseView(_ i: Int, _ c: FoyerEtat.Case?, _ j: FoyerJeu) -> some View {
-        if let c {
-            let total = max(1, c.fin - c.plantee), fait = min(1, max(0, (foyer.maintenant - c.plantee) / total))
-            let pret = c.prete || fait >= 1
-            Button {
-                if pret { effet(i, "recolter", c.plante); Task { await coach.recolter(i) } }
-                else if !c.arrosee { effet(i, "arroser", c.plante); Task { await coach.arroser(i) } }
-            } label: {
-                VStack(spacing: 3) {
-                    bac(i, plante: c.plante, pousse: pret ? 1 : max(0.14, fait), mouille: c.arrosee && !pret, pret: pret)
-                    if pret {
-                        Text("Récolter").font(.system(size: 9.5, weight: .heavy)).foregroundStyle(.black.opacity(0.8))
-                            .padding(.horizontal, 7).padding(.vertical, 2).background(Theme.done, in: Capsule())
-                    } else {
-                        Text(c.arrosee ? "💧 \(duree((c.fin - foyer.maintenant) / 60000))" : "Arroser 💧")
-                            .font(.system(size: 9.5, weight: .bold)).foregroundStyle(.white.opacity(c.arrosee ? 0.45 : 0.85))
-                    }
-                }
-                .frame(maxWidth: .infinity).padding(.vertical, 4)
-                .contentShape(Rectangle())
-            }
-            .buttonStyle(PressStyle())
-            .modifier(Relief(force: 14))
-            .help(pret ? "Récolter" : c.arrosee ? "Arrosé : ça pousse plus vite" : "Arroser : ça pousse 35 % plus vite")
-        } else {
-            Menu {
-                ForEach(j.trie(j.plantes.keys), id: \.self) { p in
-                    Button("\(j.emoji(p))  \(j.ingredients[p]?.nom ?? p) · \(duree((j.plantes[p]?.heures ?? 1) * 60))") {
-                        effet(i, "planter", p); Task { await coach.planter(i, p) }
-                    }
-                }
-            } label: {
-                VStack(spacing: 3) {
-                    bac(i, plante: nil, pousse: 0, mouille: false, pret: false)
-                        .overlay { Image(systemName: "plus").font(.system(size: 13, weight: .heavy)).foregroundStyle(.white.opacity(0.55)).offset(y: -2) }
-                    Text("Planter").font(.system(size: 9.5, weight: .bold)).foregroundStyle(.white.opacity(0.4))
-                }
-                .frame(maxWidth: .infinity).padding(.vertical, 4)
-                .contentShape(Rectangle())
-            }
-            .menuStyle(.button).buttonStyle(.plain).menuIndicator(.hidden)
-            .modifier(Relief(force: 14))
-        }
-    }
-
-    private func effet(_ i: Int, _ quoi: String, _ plante: String) { effets[i] = (quoi, plante, Date()) }
-
-    private func bac(_ i: Int, plante: String?, pousse: Double, mouille: Bool, pret: Bool) -> some View {
-        let e = effets[i], j = foyer.jeu
-        return TimelineView(.animation(minimumInterval: 1 / 30, paused: e == nil && !pret && plante == nil)) { tl in
-            let t = tl.date.timeIntervalSinceReferenceDate
-            let age = e.map { tl.date.timeIntervalSince($0.2) } ?? 99
-            ZStack {
-                Bac(w: 74, mouille: mouille || (e?.0 == "arroser" && age < 3) ? 0.75 : 0)
-                if let p = plante ?? (e?.0 == "planter" && age < 2 ? e?.1 : nil) {
-                    let saute = e?.0 == "recolter" ? M.seg(age, 0, 0.9) : 0
-                    let germe = e?.0 == "planter" ? 0.14 + 0.15 * M.spring(M.seg(age, 0.2, 1.2)) : pousse
-                    if saute == 0 || saute >= 1 {
-                        PlanteDessin(emoji: j?.emoji(p) ?? "🌱", pousse: saute >= 1 ? 0.14 : germe, t: t, size: 42)
-                            .offset(y: -19)
-                    }
-                    if saute > 0 && saute < 1 {
-                        Text(j?.emoji(p) ?? "🥕").font(.system(size: 22))
-                            .rotationEffect(.degrees(saute * 540))
-                            .offset(y: -10 - CGFloat(sin(saute * .pi)) * 46).scaleEffect(1 + 0.3 * saute).opacity(1 - saute * saute)
-                    }
-                }
-                if e?.0 == "arroser" && age < 1.6 {
-                    ForEach(0..<10, id: \.self) { k in
-                        let x = ((age * 2 + Double(k) / 10).truncatingRemainder(dividingBy: 1))
-                        Ellipse().fill(Color(red: 0.55, green: 0.8, blue: 0.98)).frame(width: 2.5, height: 4.5)
-                            .offset(x: CGFloat(M.r(k, 1) - 0.5) * 40, y: -40 + CGFloat(x) * 34).opacity(1 - x * 0.5)
-                    }
-                }
-                if pret {
-                    Image(systemName: "sparkle").font(.system(size: 9, weight: .bold)).foregroundStyle(Color(red: 1, green: 0.88, blue: 0.45))
-                        .offset(x: 22, y: -30 + CGFloat(sin(t * 3)) * 3).opacity(0.5 + 0.5 * sin(t * 4))
-                }
-                Etincelles(t: age, t0: e?.0 == "recolter" ? 0.5 : 0.9, centre: CGPoint(x: 40, y: 10), rayon: 26)
-                    .frame(width: 80, height: 40).allowsHitTesting(false)
-            }
-            .frame(width: 84, height: 58)
         }
     }
 
@@ -864,51 +786,18 @@ struct FoyerView: View {
         let dispo = j.trie(e.inventaire.keys.filter { (e.inventaire[$0] ?? 0) > 0 && $0 != "carotte_doree" })
         let plats = j.trie(e.frigo.keys.filter { (e.frigo[$0] ?? 0) > 0 })
         return VStack(alignment: .leading, spacing: 9) {
-            // la marmite : 3 places
-            HStack(spacing: 6) {
-                ForEach(0..<3, id: \.self) { k in
-                    let ing = k < marmite.count ? marmite[k] : nil
-                    Button { if let _ = ing { marmite.remove(at: k) } } label: {
-                        Text(ing.map { j.emoji($0) } ?? "")
-                            .font(.system(size: 20))
-                            .frame(width: 40, height: 40)
-                            .background(.white.opacity(ing == nil ? 0.04 : 0.1), in: Circle())
-                            .overlay(Circle().strokeBorder(.white.opacity(ing == nil ? 0.12 : 0), style: StrokeStyle(lineWidth: 1, dash: [3, 3])))
-                    }
-                    .buttonStyle(PressStyle()).help(ing == nil ? "Choisis un ingrédient en dessous" : "Retirer")
-                }
-                Spacer()
-                Button("Cuisiner") {
+            CuisineInteractive(
+                ingredients: dispo.map { i in
+                    IngredientDispo(id: i, emoji: j.emoji(i), nom: j.ingredients[i]?.nom ?? i,
+                                    n: (e.inventaire[i] ?? 0) - marmite.filter { $0 == i }.count)
+                },
+                marmite: $marmite, emoji: { j.emoji($0) }, width: 312, height: 178,
+                cuisiner: {
                     let liste = marmite
                     marmite = []
                     Task { await coach.cuisiner(liste) }
-                }
-                .buttonStyle(PillStyle(primary: true)).disabled(marmite.count < 2)
-                .opacity(marmite.count < 2 ? 0.4 : 1)
-            }
-            .padding(8)
-            .background(Theme.card, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
-
-            if dispo.isEmpty {
-                Text("Plus rien dans le placard : récolte le potager, ramasse des carottes ou passe à l'épicerie.")
-                    .font(.system(size: 11.5, weight: .medium)).foregroundStyle(.white.opacity(0.45))
-            } else {
-                LazyVGrid(columns: [GridItem(.adaptive(minimum: 52), spacing: 5)], spacing: 5) {
-                    ForEach(dispo, id: \.self) { i in
-                        let reste = (e.inventaire[i] ?? 0) - marmite.filter { $0 == i }.count
-                        Button { if reste > 0, marmite.count < 3 { marmite.append(i) } } label: {
-                            HStack(spacing: 3) {
-                                Text(j.emoji(i)).font(.system(size: 14))
-                                Text("\(reste)").font(.system(size: 11, weight: .heavy).monospacedDigit()).foregroundStyle(.white.opacity(0.75))
-                            }
-                            .frame(maxWidth: .infinity).padding(.vertical, 5)
-                            .background(.white.opacity(0.06), in: RoundedRectangle(cornerRadius: 9, style: .continuous))
-                            .opacity(reste > 0 ? 1 : 0.3)
-                        }
-                        .buttonStyle(PressStyle()).help(j.ingredients[i]?.nom ?? i)
-                    }
-                }
-            }
+                })
+            .padding(.vertical, 2)
 
             if !plats.isEmpty {
                 HStack(spacing: 6) {

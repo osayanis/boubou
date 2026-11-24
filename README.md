@@ -56,6 +56,11 @@ Yanis depuis l'onglet 🥕 de son OsaNotch (≥ 1.0.14).
   marché avec le chariot, potager…) se jouent sur une petite île qui flotte à côté de Boubou (`Scenes.swift`,
   recopié dans OsaNotch). Le potager du panneau est dessiné (bacs en bois, plantes qui poussent vraiment), et les
   cartes penchent vers la souris. Aperçu : `.build/release/Boubou apercu-scenes /tmp/scenes [bain,courses…]`.
+- **Potager et cuisine interactifs (0.6)** (`Interactif.swift`, recopié dans OsaNotch) : une île en 3D avec
+  6 bacs ; on prend l'arrosoir et on le glisse au-dessus d'un bac (il penche, l'eau coule), on glisse un sachet
+  de graines dans un bac vide, on clique un légume mûr pour le récolter. La cuisine : une marmite sur le feu où
+  l'on glisse les ingrédients de l'étagère (ils flottent dans la soupe, clic = on le ressort), puis « Touiller ».
+  Aperçu : `.build/release/Boubou apercu-interactif /tmp`.
 - **Journal à deux** : chaque geste s'écrit ; quand Yanis s'est occupé de Boubou, Boubou le raconte
   (« Yanis m'a fait des crêpes ! »).
 - **💌 Un mot pour Yanis** : Jeanne écrit, Yanis le reçoit en bannière dans son notch. À sens unique :

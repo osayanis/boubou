@@ -13,6 +13,18 @@ if args.count > 2, args[1] == "portraits" {
     do { try MainActor.assumeIsolated { try IconArt.portraits(to: URL(fileURLWithPath: args[2])) }; exit(0) }
     catch { FileHandle.standardError.write(Data("\(error)\n".utf8)); exit(1) }
 }
+if args.count > 2, args[1] == "apercu-interactif" {
+    MainActor.assumeIsolated {
+        for (nom, l, hj, hc) in [("panneau", 312.0, 214.0, 178.0), ("notch", 444.0, 190.0, 170.0)] {
+            let r = ImageRenderer(content: InteractifApercu.vue(largeur: l, hJardin: hj, hCuisine: hc))
+            r.scale = 2
+            if let img = r.nsImage, let t = img.tiffRepresentation, let b = NSBitmapImageRep(data: t) {
+                try? b.representation(using: .png, properties: [:])?.write(to: URL(fileURLWithPath: args[2]).appendingPathComponent("interactif-\(nom).png"))
+            }
+        }
+    }
+    exit(0)
+}
 if args.count > 2, args[1] == "apercu-scenes" {
     MainActor.assumeIsolated {
         let dir = URL(fileURLWithPath: args[2])
